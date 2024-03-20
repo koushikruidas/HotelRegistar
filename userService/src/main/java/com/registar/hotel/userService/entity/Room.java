@@ -18,6 +18,7 @@ public class Room {
     private int ID;
     private int roomNumber;
     @Enumerated(EnumType.STRING)
+    @Column(length = 255)
     private RoomType type;
     private String customType;
     private double pricePerNight;

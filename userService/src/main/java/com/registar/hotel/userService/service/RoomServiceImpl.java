@@ -32,8 +32,9 @@ public class RoomServiceImpl implements RoomService {
                     Optional<Hotel> hotelOptional = hotelRepository.findById(roomDTO.getHotelId());
                     if (hotelOptional.isPresent()) {
                         Hotel hotel = hotelOptional.get();
-                        roomDTO.setHotelId(hotel.getId());
-                        return modelMapper.map(roomDTO, Room.class);
+                        Room room =  modelMapper.map(roomDTO, Room.class);
+                        room.setHotel(hotel);
+                        return room;
                     } else {
                         // Handle the case where the hotel for the room is not found
                         throw new RuntimeException("Hotel not found for room with ID: " + roomDTO.getId());

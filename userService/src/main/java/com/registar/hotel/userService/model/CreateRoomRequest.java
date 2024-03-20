@@ -1,5 +1,6 @@
 package com.registar.hotel.userService.model;
 
+import com.registar.hotel.userService.entity.RoomType;
 import lombok.Data;
 
 @Data

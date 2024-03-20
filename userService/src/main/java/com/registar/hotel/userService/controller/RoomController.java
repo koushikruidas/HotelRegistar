@@ -20,8 +20,7 @@ public class RoomController {
 
     @PostMapping("/addRoom")
     public ResponseEntity<List<RoomDTO>> createRoom(@RequestBody List<RoomDTO> roomDTOs) {
-        List<RoomDTO> createdRooms = roomDTOs.stream().map(i -> roomService.saveRoom(i))
-                .collect(Collectors.toList());
+        List<RoomDTO> createdRooms = roomService.saveRooms(roomDTOs);
         if (!createdRooms.isEmpty()) {
             return new ResponseEntity<>(createdRooms, HttpStatus.CREATED);
         }
