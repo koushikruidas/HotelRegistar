@@ -34,15 +34,15 @@ public class RoomController {
                             .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
-    @GetMapping("/getAllRooms")
-    public ResponseEntity<List<RoomDTO>> getAllRooms() {
-        List<RoomDTO> allRooms = roomService.getAllRooms();
+    @GetMapping("/getAllRooms/byHotelId")
+    public ResponseEntity<List<RoomDTO>> getAllRooms(@RequestParam int id) {
+        List<RoomDTO> allRooms = roomService.getAllRooms(id);
         return new ResponseEntity<>(allRooms, HttpStatus.OK);
     }
 
-    @GetMapping("/getRoom/byAvailability")
-    public ResponseEntity<List<RoomDTO>> getRoomsByAvailability(@RequestParam("availability") boolean availability) {
-        List<RoomDTO> rooms = roomService.getRoomsByAvailability(availability);
+    @GetMapping("/getRoom/byHotelId/byAvailability")
+    public ResponseEntity<List<RoomDTO>> getRoomsByAvailability(@RequestParam int id, @RequestParam("availability") boolean availability) {
+        List<RoomDTO> rooms = roomService.getRoomsByAvailability(id, availability);
         return new ResponseEntity<>(rooms, HttpStatus.OK);
     }
 

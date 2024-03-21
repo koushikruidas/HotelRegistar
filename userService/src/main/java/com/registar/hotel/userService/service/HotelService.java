@@ -13,4 +13,5 @@ public interface HotelService {
     List<HotelDTO> getAllHotelsByOwnerId(int userId);
     List<HotelDTO> getAllHotels();
     void deleteHotel(int id);
+    Optional<HotelDTO> updateHotel(int hotelId, CreateHotelRequest hotelRequest);
 }

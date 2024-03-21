@@ -7,6 +7,7 @@ import lombok.Data;
 public class CreateRoomRequest {
     private int roomNumber;
     private RoomType type;
+    private String customType;
     private double pricePerNight;
     private boolean availability;
 }

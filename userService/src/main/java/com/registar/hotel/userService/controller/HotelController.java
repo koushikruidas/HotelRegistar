@@ -74,6 +74,13 @@ public class HotelController {
         return new ResponseEntity<>(allHotels, HttpStatus.OK);
     }
 
+    @PutMapping("update/{hotelId}")
+    public ResponseEntity<HotelDTO> updateHotel(@PathVariable int hotelId, @RequestBody CreateHotelRequest hotelRequest) {
+        Optional<HotelDTO> updatedHotel = hotelService.updateHotel(hotelId, hotelRequest);
+        return updatedHotel.map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deleteHotel(@PathVariable("id") int id) {
         hotelService.deleteHotel(id);

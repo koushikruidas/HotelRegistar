@@ -8,5 +8,6 @@ import java.util.List;
 
 @Repository
 public interface RoomRepository extends JpaRepository<Room, Integer> {
-    List<Room> findByAvailability(boolean availability);
+    List<Room> findByHotelIdAndAvailability(int id, boolean availability);
+    List<Room> findByHotelId(int id);
 }

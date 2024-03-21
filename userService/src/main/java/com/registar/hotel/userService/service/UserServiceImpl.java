@@ -1,5 +1,6 @@
 package com.registar.hotel.userService.service;
 
+import com.registar.hotel.userService.entity.Role;
 import com.registar.hotel.userService.entity.User;
 import com.registar.hotel.userService.model.CreateUserRequest;
 import com.registar.hotel.userService.model.UpdateUserRequest;
@@ -8,8 +9,11 @@ import com.registar.hotel.userService.repository.UserRepository;
 import com.registar.hotel.userService.utility.UserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 @Service
@@ -17,6 +21,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private Logger logger = Logger.getLogger("UserServiceImpl");
 
     @Autowired
     public UserServiceImpl(UserRepository userRepository, UserMapper userMapper) {
@@ -47,10 +52,28 @@ public class UserServiceImpl implements UserService {
     public Optional<UserDTO> updateUser(int userId, UpdateUserRequest userDTO) {
         Optional<User> existingUser = userRepository.findById(userId);
         if (existingUser.isPresent()) {
-            existingUser.get().setUsername(userDTO.getUsername());
-            existingUser.get().setPassword(userDTO.getPassword());
-            existingUser.get().setEmail(userDTO.getEmail());
-            existingUser.get().setRole(userDTO.getRole());
+            User user = existingUser.get();
+            String newUsername = userDTO.getUsername();
+            String newPassword = userDTO.getPassword();
+            String newEmail = userDTO.getEmail();
+            Role newRole = userDTO.getRole();
+
+            if (!newUsername.isEmpty() && !newUsername.isBlank()) {
+                user.setUsername(newUsername);
+            }
+            if (!newPassword.isEmpty() && !newPassword.isBlank()) {
+                user.setPassword(newPassword);
+            }
+            if (!newEmail.isEmpty() && !newEmail.isBlank()) {
+                user.setEmail(newEmail);
+            }
+
+            // Check if the new role is not null and is valid
+            if (newRole != null && Arrays.asList(Role.values()).contains(newRole)) {
+                user.setRole(newRole);
+            } else {
+                logger.warning("Role not found, hence keeping the previous role: "+user.getRole());
+            }
             // Update other fields as needed
             User updatedUser = userRepository.save(existingUser.get());
             return Optional.of(userMapper.toDto(updatedUser));

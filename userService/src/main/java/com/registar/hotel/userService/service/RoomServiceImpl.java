@@ -52,16 +52,16 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
-    public List<RoomDTO> getAllRooms() {
-        List<Room> rooms = roomRepository.findAll();
+    public List<RoomDTO> getAllRooms(int id) {
+        List<Room> rooms = roomRepository.findByHotelId(id);
         return rooms.stream()
                     .map(room -> modelMapper.map(room, RoomDTO.class))
                     .collect(Collectors.toList());
     }
 
     @Override
-    public List<RoomDTO> getRoomsByAvailability(boolean availability) {
-        List<Room> rooms = roomRepository.findByAvailability(availability);
+    public List<RoomDTO> getRoomsByAvailability(int id, boolean availability) {
+        List<Room> rooms = roomRepository.findByHotelIdAndAvailability(id,availability);
         return rooms.stream()
                 .map(room -> modelMapper.map(room, RoomDTO.class))
                 .collect(Collectors.toList());

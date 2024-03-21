@@ -8,7 +8,7 @@ import java.util.Optional;
 public interface RoomService {
     List<RoomDTO> saveRooms(List<RoomDTO> roomDTOs);
     Optional<RoomDTO> getRoomById(int id);
-    List<RoomDTO> getAllRooms();
-    List<RoomDTO> getRoomsByAvailability(boolean availability);
+    List<RoomDTO> getAllRooms(int id);
+    List<RoomDTO> getRoomsByAvailability(int id, boolean availability);
     void deleteRoom(int id);
 }
