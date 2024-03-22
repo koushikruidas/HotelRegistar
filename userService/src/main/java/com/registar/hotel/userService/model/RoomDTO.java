@@ -5,6 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+import java.util.Map;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -14,6 +17,6 @@ public class RoomDTO {
     private RoomType type;
     private String customType;
     private double pricePerNight;
-    private boolean availability;
+    private Map<LocalDate, Boolean> bookingMap;
     private int hotelId;
 }

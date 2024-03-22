@@ -5,6 +5,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import jakarta.persistence.*;
+
+import java.time.LocalDate;
+import java.util.Date;
 import java.util.List;
 
 @Data
@@ -16,11 +19,12 @@ public class Booking {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int ID;
-    @ManyToOne
-    @JoinColumn(name = "guest_id")
-    private Guest guest;
-    private String checkInDate;
-    private String checkOutDate;
+
+    private LocalDate checkInDate;
+    private LocalDate checkOutDate;
+    private double totalPrice;
+    private BookingStatus status;
+
     @ManyToMany
     @JoinTable(
             name = "booking_room",
@@ -28,7 +32,13 @@ public class Booking {
             inverseJoinColumns = @JoinColumn(name = "room_id")
     )
     private List<Room> bookedRooms;
-    private double totalPrice;
+
+    /**
+     * If all Guest entities associated with a Booking are removed from the guests list,
+     * the Booking entity will be deleted from the database automatically due to orphan removal.
+     */
+    @OneToMany(mappedBy = "booking",cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Guest> guests;
 }
 
 

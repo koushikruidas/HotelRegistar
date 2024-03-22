@@ -1,17 +1,22 @@
 package com.registar.hotel.userService.controller;
 
+import com.registar.hotel.userService.entity.Hotel;
+import com.registar.hotel.userService.entity.Room;
 import com.registar.hotel.userService.model.CreateHotelRequest;
 import com.registar.hotel.userService.model.CreateRoomRequest;
 import com.registar.hotel.userService.model.HotelDTO;
 import com.registar.hotel.userService.model.RoomDTO;
 import com.registar.hotel.userService.service.HotelService;
+import com.registar.hotel.userService.service.RoomService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -22,6 +27,8 @@ public class HotelController {
     @Autowired
     private HotelService hotelService;
     @Autowired
+    private RoomService roomService;
+    @Autowired
     private ModelMapper modelMapper;
 
     @PostMapping("/add")
@@ -31,17 +38,19 @@ public class HotelController {
     }
 
     @PostMapping("/addRooms")
-    public ResponseEntity<HotelDTO> addRooms(@RequestParam int hotelId, @RequestBody List<CreateRoomRequest> rooms){
+    public ResponseEntity<HotelDTO> addRooms(@RequestParam int hotelId,
+                                             @RequestBody List<CreateRoomRequest> rooms){
         Optional<HotelDTO> hotelOptional = hotelService.getHotelById(hotelId);
         if (hotelOptional.isPresent()) {
             HotelDTO hotelDTO = hotelOptional.get();
 
             // changing the list to RoomDTO types
-            List<RoomDTO> roomsDto = rooms.stream().map(i -> {
-                RoomDTO room  = modelMapper.map(i,RoomDTO.class);
-                room.setHotelId(hotelDTO.getId());
-                return room;
-            }).toList();
+            List<RoomDTO> roomsDto = rooms.stream()
+                    .map(room -> {
+                        Room createdRoom = roomService.createRoom(room);
+                        createdRoom.setHotel(modelMapper.map(hotelDTO, Hotel.class));
+                        return modelMapper.map(createdRoom, RoomDTO.class);
+                    }).toList();
 
             hotelDTO.setRooms(roomsDto);
             hotelService.saveHotel(hotelDTO);

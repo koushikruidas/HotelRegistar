@@ -5,7 +5,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import jakarta.persistence.*;
-import java.util.List;
+
+import java.time.LocalDate;
+import java.util.*;
 
 @Data
 @AllArgsConstructor
@@ -15,19 +17,33 @@ import java.util.List;
 public class Room {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int ID;
+    private int Id;
     private int roomNumber;
     @Enumerated(EnumType.STRING)
     @Column(length = 255)
     private RoomType type;
     private String customType;
     private double pricePerNight;
-    private boolean availability;
     @ManyToOne
     @JoinColumn(name = "hotel_id")
     private Hotel hotel;
+
     @ManyToMany(mappedBy = "bookedRooms", cascade = CascadeType.ALL)
     private List<Booking> bookings;
+
+    @ElementCollection
+    @CollectionTable(name = "room_availability", joinColumns = @JoinColumn(name = "room_id"))
+    @MapKeyTemporal(TemporalType.DATE)
+    @Column(name = "isBooked")
+    private Map<LocalDate, Boolean> bookingMap = new HashMap<>();
+
+    public void setAvailabilityForDateRange(LocalDate startDate, LocalDate endDate, boolean isBooked) {
+        LocalDate currentDate = startDate;
+        while (!currentDate.isAfter(endDate)) {
+            bookingMap.put(currentDate, isBooked);
+            currentDate = currentDate.plusDays(1); // Increment by one day
+        }
+    }
 }
 
 

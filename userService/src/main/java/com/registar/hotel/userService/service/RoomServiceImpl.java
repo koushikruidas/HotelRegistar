@@ -1,7 +1,7 @@
 package com.registar.hotel.userService.service;
 
-import com.registar.hotel.userService.entity.Hotel;
 import com.registar.hotel.userService.entity.Room;
+import com.registar.hotel.userService.model.CreateRoomRequest;
 import com.registar.hotel.userService.model.RoomDTO;
 import com.registar.hotel.userService.repository.HotelRepository;
 import com.registar.hotel.userService.repository.RoomRepository;
@@ -9,10 +9,9 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
+import java.time.LocalDate;
+import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 public class RoomServiceImpl implements RoomService {
@@ -24,26 +23,6 @@ public class RoomServiceImpl implements RoomService {
 
     @Autowired
     private ModelMapper modelMapper;
-
-    @Override
-    public List<RoomDTO> saveRooms(List<RoomDTO> roomDTOs) {
-        List<Room> rooms = roomDTOs.stream()
-                .map(roomDTO -> {
-                    Optional<Hotel> hotelOptional = hotelRepository.findById(roomDTO.getHotelId());
-                    if (hotelOptional.isPresent()) {
-                        Hotel hotel = hotelOptional.get();
-                        Room room =  modelMapper.map(roomDTO, Room.class);
-                        room.setHotel(hotel);
-                        return room;
-                    } else {
-                        // Handle the case where the hotel for the room is not found
-                        throw new RuntimeException("Hotel not found for room with ID: " + roomDTO.getId());
-                    }
-                })
-                .collect(Collectors.toList());
-        List<Room> savedRooms = roomRepository.saveAll(rooms);
-        return savedRooms.stream().map(room -> modelMapper.map(room,RoomDTO.class)).collect(Collectors.toList());
-    }
 
     @Override
     public Optional<RoomDTO> getRoomById(int id) {
@@ -60,15 +39,24 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
-    public List<RoomDTO> getRoomsByAvailability(int id, boolean availability) {
-        List<Room> rooms = roomRepository.findByHotelIdAndAvailability(id,availability);
-        return rooms.stream()
-                .map(room -> modelMapper.map(room, RoomDTO.class))
-                .collect(Collectors.toList());
+    public List<RoomDTO> getAvailableRoomsForDateRange(LocalDate startDate, LocalDate endDate, List<Integer> hotelIds) {
+        List<Room> availableRooms = roomRepository.findAvailableRoomsForDateRange(startDate, endDate, hotelIds);
+        return availableRooms.stream().map(room -> modelMapper.map(room,RoomDTO.class)).collect(Collectors.toList());
     }
 
     @Override
     public void deleteRoom(int id) {
         roomRepository.deleteById(id);
+    }
+
+    @Override
+    public Room createRoom(CreateRoomRequest roomRequest) {
+        Room room = new Room();
+        room.setRoomNumber(roomRequest.getRoomNumber());
+        room.setType(roomRequest.getType());
+        room.setCustomType(roomRequest.getCustomType());
+        room.setPricePerNight(roomRequest.getPricePerNight());
+
+        return roomRepository.save(room);
     }
 }

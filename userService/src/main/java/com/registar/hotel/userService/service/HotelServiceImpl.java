@@ -1,8 +1,10 @@
 package com.registar.hotel.userService.service;
 
 import com.registar.hotel.userService.entity.Hotel;
+import com.registar.hotel.userService.entity.Room;
 import com.registar.hotel.userService.entity.User;
 import com.registar.hotel.userService.model.CreateHotelRequest;
+import com.registar.hotel.userService.model.CreateRoomRequest;
 import com.registar.hotel.userService.model.HotelDTO;
 import com.registar.hotel.userService.model.UserDTO;
 import com.registar.hotel.userService.repository.HotelRepository;
@@ -13,8 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service

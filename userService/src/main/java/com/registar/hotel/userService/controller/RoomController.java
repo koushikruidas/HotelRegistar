@@ -1,12 +1,19 @@
 package com.registar.hotel.userService.controller;
 
+import com.registar.hotel.userService.model.CreateRoomRequest;
 import com.registar.hotel.userService.model.RoomDTO;
 import com.registar.hotel.userService.service.RoomService;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -17,15 +24,6 @@ public class RoomController {
 
     @Autowired
     private RoomService roomService;
-
-    @PostMapping("/addRoom")
-    public ResponseEntity<List<RoomDTO>> createRoom(@RequestBody List<RoomDTO> roomDTOs) {
-        List<RoomDTO> createdRooms = roomService.saveRooms(roomDTOs);
-        if (!createdRooms.isEmpty()) {
-            return new ResponseEntity<>(createdRooms, HttpStatus.CREATED);
-        }
-        return new ResponseEntity<>(createdRooms,HttpStatus.NOT_FOUND);
-    }
 
     @GetMapping("/getRoomById/{id}")
     public ResponseEntity<RoomDTO> getRoomById(@PathVariable("id") int id) {
@@ -40,10 +38,19 @@ public class RoomController {
         return new ResponseEntity<>(allRooms, HttpStatus.OK);
     }
 
-    @GetMapping("/getRoom/byHotelId/byAvailability")
-    public ResponseEntity<List<RoomDTO>> getRoomsByAvailability(@RequestParam int id, @RequestParam("availability") boolean availability) {
-        List<RoomDTO> rooms = roomService.getRoomsByAvailability(id, availability);
-        return new ResponseEntity<>(rooms, HttpStatus.OK);
+    @GetMapping("/available")
+    public ResponseEntity<List<RoomDTO>> getAvailableRoomsForDateRange(
+            @Parameter(in = ParameterIn.QUERY, description = "Start date in the format dd-MM-yyyy", required = true, schema = @Schema(type = "string", format = "date", pattern = "dd-MM-yyyy"))
+            @RequestParam(name = "startDate") @DateTimeFormat(pattern = "dd-MM-yyyy") LocalDate startDate,
+
+            @Parameter(in = ParameterIn.QUERY, description = "End date in the format dd-MM-yyyy", required = true, schema = @Schema(type = "string", format = "date", pattern = "dd-MM-yyyy"))
+            @RequestParam(name = "endDate") @DateTimeFormat(pattern = "dd-MM-yyyy") LocalDate endDate,
+
+            @Parameter(in = ParameterIn.QUERY, description = "List of hotel IDs", required = true)
+            @RequestParam(name = "hotelIds") List<Integer> hotelIds) {
+
+        List<RoomDTO> availableRooms = roomService.getAvailableRoomsForDateRange(startDate, endDate, hotelIds);
+        return ResponseEntity.ok(availableRooms);
     }
 
     @DeleteMapping("delete/{id}")
