@@ -7,7 +7,6 @@ import lombok.ToString;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
-import java.util.Date;
 import java.util.List;
 
 @Data
@@ -18,7 +17,7 @@ import java.util.List;
 public class Booking {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int ID;
+    private int Id;
 
     private LocalDate checkInDate;
     private LocalDate checkOutDate;

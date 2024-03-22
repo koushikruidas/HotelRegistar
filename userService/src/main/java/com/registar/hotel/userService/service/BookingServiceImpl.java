@@ -11,9 +11,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class BookingServiceImpl implements BookingService {
@@ -29,7 +31,22 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public BookingDTO saveBooking(BookingDTO bookingDTO) {
         Booking booking = modelMapper.map(bookingDTO, Booking.class);
+        List<Room> rooms = bookingDTO.getBookedRoomIds().stream()
+                .map(roomRepository::findById)
+                .flatMap(Optional::stream)
+                .collect(Collectors.toList());
+        booking.setBookedRooms(rooms);
+
+        // Calculate the total price based on the prices of the booked rooms
+        double totalPricePerNight = rooms.stream()
+                .mapToDouble(Room::getPricePerNight)
+                .sum();
+        long daysBetween = ChronoUnit.DAYS.between(bookingDTO.getCheckInDate(), bookingDTO.getCheckOutDate());
+
+        double totalPrice = totalPricePerNight*daysBetween;
+        booking.setTotalPrice(totalPrice);
         Booking savedBooking = bookingRepository.save(booking);
+        completeBooking(savedBooking.getId());
         return modelMapper.map(savedBooking, BookingDTO.class);
     }
 
@@ -69,14 +86,11 @@ public class BookingServiceImpl implements BookingService {
         LocalDate checkInDate = booking.getCheckInDate();
         LocalDate checkOutDate = booking.getCheckOutDate();
 
-        for (Room room : bookedRooms) {
-            // Find the room entity from the database to ensure it's managed
-            Room managedRoom = roomRepository.findById(room.getId()).orElse(null);
-            if (managedRoom != null) {
-                // Update room availability for the booked date range
-                managedRoom.setAvailabilityForDateRange(checkInDate, checkOutDate, true);
-                roomRepository.save(managedRoom);
-            }
+        for (Room room : bookedRooms){
+            // Update room availability for the booked date range
+            room.setAvailabilityForDateRange(checkInDate, checkOutDate, true);
         }
+        // Save all the updated rooms in a single batch operation
+        roomRepository.saveAll(bookedRooms);
     }
 }

@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Data
@@ -11,9 +12,8 @@ import java.util.List;
 @NoArgsConstructor
 public class BookingDTO {
     private int id;
-    private int guestId;
-    private String checkInDate;
-    private String checkOutDate;
+    private List<Integer> guestId;
+    private LocalDate checkInDate;
+    private LocalDate checkOutDate;
     private List<Integer> bookedRoomIds;
-    private double totalPrice;
 }
