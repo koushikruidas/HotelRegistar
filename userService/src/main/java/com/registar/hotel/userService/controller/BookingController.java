@@ -2,6 +2,7 @@ package com.registar.hotel.userService.controller;
 
 import com.registar.hotel.userService.model.BookingDTO;
 import com.registar.hotel.userService.service.BookingService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +19,7 @@ public class BookingController {
     private BookingService bookingService;
 
     @PostMapping
-    public ResponseEntity<BookingDTO> createBooking(@RequestBody BookingDTO bookingDTO) {
+    public ResponseEntity<BookingDTO> createBooking(@Valid @RequestBody BookingDTO bookingDTO) {
         BookingDTO createdBooking = bookingService.saveBooking(bookingDTO);
         return new ResponseEntity<>(createdBooking, HttpStatus.CREATED);
     }

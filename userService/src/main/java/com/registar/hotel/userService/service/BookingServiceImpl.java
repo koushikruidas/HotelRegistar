@@ -15,7 +15,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 public class BookingServiceImpl implements BookingService {
@@ -30,6 +29,11 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public BookingDTO saveBooking(BookingDTO bookingDTO) {
+        // Check if checkOutDate is after checkInDate
+        if (bookingDTO.getCheckOutDate().isBefore(bookingDTO.getCheckInDate())) {
+            throw new IllegalArgumentException("Check-out date must be after check-in date");
+        }
+
         Booking booking = modelMapper.map(bookingDTO, Booking.class);
         List<Room> rooms = bookingDTO.getBookedRoomIds().stream()
                 .map(roomRepository::findById)
@@ -39,11 +43,16 @@ public class BookingServiceImpl implements BookingService {
 
         // Calculate the total price based on the prices of the booked rooms
         double totalPricePerNight = rooms.stream()
+                .peek(i -> {
+                    if (bookingDTO.getRoomPrice().containsKey(i.getId())){
+                        i.setPricePerNight(bookingDTO.getRoomPrice().get(i.getId()));
+                    }
+                })
                 .mapToDouble(Room::getPricePerNight)
                 .sum();
         long daysBetween = ChronoUnit.DAYS.between(bookingDTO.getCheckInDate(), bookingDTO.getCheckOutDate());
 
-        double totalPrice = totalPricePerNight*daysBetween;
+        double totalPrice = totalPricePerNight * daysBetween;
         booking.setTotalPrice(totalPrice);
         Booking savedBooking = bookingRepository.save(booking);
         completeBooking(savedBooking.getId());
