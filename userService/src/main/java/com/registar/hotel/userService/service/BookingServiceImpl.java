@@ -2,10 +2,16 @@ package com.registar.hotel.userService.service;
 
 import com.registar.hotel.userService.entity.Booking;
 import com.registar.hotel.userService.entity.BookingStatus;
+import com.registar.hotel.userService.entity.Guest;
 import com.registar.hotel.userService.entity.Room;
+import com.registar.hotel.userService.exception.RoomNotAvailableException;
 import com.registar.hotel.userService.model.BookingDTO;
+import com.registar.hotel.userService.model.BookingWithGuestsDTO;
+import com.registar.hotel.userService.model.GuestDTO;
 import com.registar.hotel.userService.repository.BookingRepository;
+import com.registar.hotel.userService.repository.GuestRepository;
 import com.registar.hotel.userService.repository.RoomRepository;
+import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -13,6 +19,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -23,7 +30,8 @@ public class BookingServiceImpl implements BookingService {
     private BookingRepository bookingRepository;
     @Autowired
     private RoomRepository roomRepository;
-
+    @Autowired
+    private GuestRepository guestRepository;
     @Autowired
     private ModelMapper modelMapper;
 
@@ -50,14 +58,81 @@ public class BookingServiceImpl implements BookingService {
                 })
                 .mapToDouble(Room::getPricePerNight)
                 .sum();
-        long daysBetween = ChronoUnit.DAYS.between(bookingDTO.getCheckInDate(), bookingDTO.getCheckOutDate());
 
+        long daysBetween = 0;
+        if (bookingDTO.getCheckInDate().equals(bookingDTO.getCheckOutDate())){
+            daysBetween = 1;
+        } else {
+            daysBetween = ChronoUnit.DAYS.between(bookingDTO.getCheckInDate(), bookingDTO.getCheckOutDate());
+        }
         double totalPrice = totalPricePerNight * daysBetween;
         booking.setTotalPrice(totalPrice);
         Booking savedBooking = bookingRepository.save(booking);
         completeBooking(savedBooking.getId());
         return modelMapper.map(savedBooking, BookingDTO.class);
     }
+    @Override
+    @Transactional
+    public BookingDTO saveBookingWithGuests(BookingWithGuestsDTO bookingWithGuestsDTO) {
+        BookingDTO bookingDTO = bookingWithGuestsDTO.getBooking();
+        List<GuestDTO> guestDTOs = bookingWithGuestsDTO.getGuests();
+
+
+        LocalDate checkInDate = bookingDTO.getCheckInDate();
+        LocalDate checkOutDate = bookingDTO.getCheckOutDate();
+
+        List<Guest> guests = guestDTOs.stream()
+                .map(guestDTO -> {
+                    Optional<Guest> existingGuestOptional = guestRepository
+                            .findByNameAndMobileNo(guestDTO.getName(),guestDTO.getMobileNo());
+                    return existingGuestOptional.orElseGet(() -> modelMapper.map(guestDTO, Guest.class));
+                })
+                .collect(Collectors.toList());
+
+        Booking booking = modelMapper.map(bookingDTO, Booking.class);
+        booking.setGuests(guests);
+
+        List<Room> rooms = bookingDTO.getBookedRoomIds().stream()
+                .map(roomRepository::findById)
+                .flatMap(Optional::stream)
+                .filter(room -> {
+                    // Get the availability map for the room
+                    Map<LocalDate, Boolean> availabilityMap = room.getBookingMap();
+
+                    // Check availability for each date in the range
+                    for (LocalDate date = checkInDate; !date.isAfter(checkOutDate); date = date.plusDays(1)) {
+                        if (availabilityMap.getOrDefault(date, false)) {
+                            // Room is not available for this date, so filter it out
+                            throw new RoomNotAvailableException("Room: "+room.getRoomNumber()+" is not available for the date: "+date);
+                        }
+                    }
+                    return true; // Room is available for the entire date range
+                })
+                .collect(Collectors.toList());
+        booking.setBookedRooms(rooms);
+
+        double totalPricePerNight = rooms.stream()
+                .peek(room -> {
+                    if (bookingDTO.getRoomPrice().containsKey(room.getId())) {
+                        room.setPricePerNight(bookingDTO.getRoomPrice().get(room.getId()));
+                    }
+                })
+                .mapToDouble(Room::getPricePerNight)
+                .sum();
+
+        long daysBetween = ChronoUnit.DAYS.between(bookingDTO.getCheckInDate(), bookingDTO.getCheckOutDate());
+        double totalPrice = totalPricePerNight * Math.max(daysBetween, 1); // Ensure at least 1 day is charged
+        booking.setTotalPrice(totalPrice);
+
+        Booking savedBooking = bookingRepository.save(booking);
+        completeBooking(savedBooking.getId());
+
+        return modelMapper.map(savedBooking, BookingDTO.class);
+    }
+
+
+
+
 
     @Override
     public Optional<BookingDTO> getBookingById(int id) {

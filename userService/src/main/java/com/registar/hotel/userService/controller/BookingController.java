@@ -1,8 +1,11 @@
 package com.registar.hotel.userService.controller;
 
 import com.registar.hotel.userService.model.BookingDTO;
+import com.registar.hotel.userService.model.BookingWithGuestsDTO;
 import com.registar.hotel.userService.service.BookingService;
+import com.registar.hotel.userService.service.GuestService;
 import jakarta.validation.Valid;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,10 +20,14 @@ public class BookingController {
 
     @Autowired
     private BookingService bookingService;
+    @Autowired
+    private GuestService guestService;
+    @Autowired
+    private ModelMapper modelMapper;
 
-    @PostMapping
-    public ResponseEntity<BookingDTO> createBooking(@Valid @RequestBody BookingDTO bookingDTO) {
-        BookingDTO createdBooking = bookingService.saveBooking(bookingDTO);
+    @PostMapping("/create/booking/withGuest")
+    public ResponseEntity<BookingDTO> createBookingWithGuests(@Valid @RequestBody BookingWithGuestsDTO bookingWithGuestsDTO) {
+        BookingDTO createdBooking = bookingService.saveBookingWithGuests(bookingWithGuestsDTO);
         return new ResponseEntity<>(createdBooking, HttpStatus.CREATED);
     }
 

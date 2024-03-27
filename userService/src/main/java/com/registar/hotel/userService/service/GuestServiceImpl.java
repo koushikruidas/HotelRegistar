@@ -30,6 +30,12 @@ public class GuestServiceImpl implements GuestService {
         Guest savedGuest = guestRepository.save(guest);
         return modelMapper.map(savedGuest,GuestDTO.class);
     }
+    @Override
+    public List<GuestDTO> saveAll(List<GuestDTO> guestDTOS){
+        List<Guest> guests = guestDTOS.stream().map(i -> modelMapper.map(i, Guest.class)).collect(Collectors.toList());
+        List<Guest> result = guestRepository.saveAll(guests);
+        return result.stream().map(i ->modelMapper.map(i,GuestDTO.class)).toList();
+    }
 
     @Override
     public Optional<GuestDTO> getGuestById(int id) {
@@ -38,9 +44,12 @@ public class GuestServiceImpl implements GuestService {
     }
 
     @Override
-    public Optional<GuestDTO> getGuestByMobileNo(String mobileNo) {
-        Optional<Guest> guestOptional = guestRepository.findByMobileNo(mobileNo);
-        return guestOptional.map(i -> modelMapper.map(i,GuestDTO.class));
+    public Optional<List<GuestDTO>> getGuestByMobileNo(String mobileNo) {
+        Optional<List<Guest>> guestOptional = guestRepository.findByMobileNo(mobileNo);
+        return guestOptional.map(guests ->
+                guests.stream()
+                        .map(guest -> modelMapper.map(guest, GuestDTO.class))
+                        .collect(Collectors.toList()));
     }
 
     @Override

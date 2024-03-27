@@ -13,18 +13,18 @@ import java.util.List;
 @NoArgsConstructor
 @ToString
 @Entity
+@Table(uniqueConstraints = {@UniqueConstraint(columnNames = {"name", "mobileNo"})})
 public class Guest {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     private String name;
-    @Column(unique = true)
     private String mobileNo;
     private String govIDFilePath; // File path for government IDs
     private String pictureFilePath; // File path for guest picture
-    @ManyToOne
-    @JoinColumn(name = "booking_id")
-    private Booking booking;
+
+    @ManyToMany(mappedBy = "guests")
+    private List<Booking> bookings;
 }
 
 

@@ -36,7 +36,13 @@ public class Booking {
      * If all Guest entities associated with a Booking are removed from the guests list,
      * the Booking entity will be deleted from the database automatically due to orphan removal.
      */
-    @OneToMany(mappedBy = "booking",cascade = CascadeType.ALL, orphanRemoval = true)
+    @ManyToMany(cascade = {CascadeType.DETACH, CascadeType.MERGE,
+            CascadeType.PERSIST,CascadeType.REFRESH})
+    @JoinTable(
+            name = "booking_guest",
+            joinColumns = @JoinColumn(name = "booking_id"),
+            inverseJoinColumns = @JoinColumn(name = "guest_id")
+    )
     private List<Guest> guests;
 }
 
