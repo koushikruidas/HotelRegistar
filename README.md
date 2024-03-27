@@ -31,3 +31,7 @@ h) Now goto below URL to get the api documentation.
 i) To stop press
 
     CTRL+C
+
+Flow: 
+
+Create User with role hotel owner -> Create Hotel -> Add rooms to the hotel -> Create Guest -> Create Booking
