@@ -2,6 +2,7 @@ package com.registar.hotel.userService.controller;
 
 import com.registar.hotel.userService.entity.Guest;
 import com.registar.hotel.userService.exception.GuestNotFoundException;
+import com.registar.hotel.userService.model.BookingDTO;
 import com.registar.hotel.userService.model.GuestDTO;
 import com.registar.hotel.userService.service.FileUploadService;
 import com.registar.hotel.userService.service.GuestService;
@@ -20,6 +21,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequestMapping("/api/upload")
@@ -39,18 +42,57 @@ public class FileUploadController {
         this.s3Service = s3Service;
     }
 
-    @PostMapping("/guest")
-    public ResponseEntity<String> createGuestWithGovID(@RequestParam("file") MultipartFile file, @RequestParam("name") String name, @RequestParam("mobileNo") String mobileNo, @RequestParam("govIDFilePath") String govIDFilePath, @RequestParam("pictureFilePath") String pictureFilePath) {
-        try {
-            // Upload the file for the guest
-            String uploadedFilePath = s3Service.uploadFileForGuest(file, name, mobileNo);
+    @PostMapping("/guest/files")
+    public ResponseEntity<String> createGuestWithGovID(@RequestParam("govtId") MultipartFile govtId, @RequestParam("picture") MultipartFile picture, @RequestPart GuestDTO guestDTO) {
+        // Upload the files in parallel
+        CompletableFuture<String> govtIdUploadFuture = uploadFileAsync(govtId,guestDTO.getName(),guestDTO.getMobileNo());
+
+        CompletableFuture<String> picUploadFuture = uploadFileAsync(picture,guestDTO.getName(),guestDTO.getMobileNo());
+        // Wait for both uploads to complete
+        CompletableFuture.allOf(govtIdUploadFuture, picUploadFuture).join();
+
+
+
+
+        Optional<Guest> existingGuest = guestService.findByNameAndMobile(guestDTO.getName(),guestDTO.getMobileNo());
+        if (existingGuest.isPresent()){
+            GuestDTO existingGuestDTO = modelMapper.map(existingGuest,GuestDTO.class);
 
             // Create the guest entity with file paths
-            GuestDTO guestDTO = new GuestDTO();
-            guestDTO.setName(name);
-            guestDTO.setMobileNo(mobileNo);
-            guestDTO.setGovtIDFilePath(uploadedFilePath);
-            guestDTO.setPictureFilePath(pictureFilePath);
+            existingGuestDTO.setGovtIDFilePath(govtIdUploadFuture.join());
+            existingGuestDTO.setPictureFilePath(picUploadFuture.join());
+
+            guestService.saveGuest(existingGuestDTO);
+        } else {
+            // Create the guest entity with file paths
+            guestDTO.setGovtIDFilePath(govtIdUploadFuture.join());
+            guestDTO.setPictureFilePath(picUploadFuture.join());
+
+            // Save the guest
+            guestService.saveGuest(guestDTO);
+        }
+        return ResponseEntity.ok("Guest created successfully.");
+    }
+
+    // Helper method to upload file asynchronously
+    private CompletableFuture<String> uploadFileAsync(MultipartFile file, String name, String mobileNo) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return s3Service.uploadFileForGuest(file, name, mobileNo);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    @PostMapping("/guest/picture")
+    public ResponseEntity<String> createGuestWithPicture(@RequestParam("file") MultipartFile file, @RequestBody GuestDTO guestDTO) {
+        try {
+            // Upload the file for the guest
+            String uploadedFilePath = s3Service.uploadFileForGuest(file, guestDTO.getName(), guestDTO.getMobileNo());
+
+            // Create the guest entity with file paths
+            guestDTO.setPictureFilePath(uploadedFilePath);
 
             // Save the guest
             guestService.saveGuest(guestDTO);
@@ -61,9 +103,6 @@ public class FileUploadController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to create guest with govt. id file: " + e.getMessage());
         }
     }
-
-
-
 
 
     // Endpoint for uploading government IDs
@@ -93,7 +132,7 @@ public class FileUploadController {
                 // Proceed with keyName
             } else {
                 // Handle the case where guest is not found
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Guest not exists for id: "+guestId);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Guest not exists for id: " + guestId);
             }
             // Upload the file to S3 bucket
             s3Service.uploadFile(file, keyName);
@@ -114,7 +153,7 @@ public class FileUploadController {
     @GetMapping("/download/govtId/{guestId}")
     public ResponseEntity<byte[]> downloadFile(@PathVariable int guestId) {
         Optional<GuestDTO> guestDTO = guestService.getGuestById(guestId);
-        Guest guest = modelMapper.map(guestDTO,Guest.class);
+        Guest guest = modelMapper.map(guestDTO, Guest.class);
         if (guest.getPictureFilePath() != null) {
             try {
                 // Generate a pre-signed URL for the file with a short expiration time

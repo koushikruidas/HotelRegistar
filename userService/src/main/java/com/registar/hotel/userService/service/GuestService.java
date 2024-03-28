@@ -15,4 +15,5 @@ public interface GuestService {
     List<GuestDTO> getAllGuests();
     void deleteGuest(int id);
     void update(GuestDTO guestDTO);
+    Optional<Guest> findByNameAndMobile(String name, String mobile);
 }

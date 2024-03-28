@@ -70,4 +70,9 @@ public class GuestServiceImpl implements GuestService {
         Guest guest = modelMapper.map(guestDTO,Guest.class);
         guestRepository.save(guest);
     }
+
+    @Override
+    public Optional<Guest> findByNameAndMobile(String name, String mobile) {
+        return guestRepository.findByNameAndMobileNo(name,mobile);
+    }
 }
