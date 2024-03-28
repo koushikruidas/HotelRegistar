@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface BookingService {
-    BookingDTO saveBooking(BookingDTO bookingDTO);
     BookingDTO saveBookingWithGuests(BookingWithGuestsDTO bookingWithGuestsDTO);
     Optional<BookingDTO> getBookingById(int id);
     List<BookingDTO> getAllBookings();

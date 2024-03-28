@@ -18,8 +18,8 @@ public class BookingDTO {
     @NotNull(message = "cannot be empty")
     private LocalDate checkOutDate;
 
-    @NotEmpty(message = "Booked room IDs list cannot be empty")
-    private List<Integer> bookedRoomIds;
+    @NotEmpty(message = "Booked rooms list cannot be empty")
+    private List<RoomDTO> bookedRooms;
 
     private Map<Integer,Double> roomPrice;
 }

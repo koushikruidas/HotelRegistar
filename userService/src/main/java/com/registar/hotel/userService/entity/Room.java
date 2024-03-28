@@ -44,6 +44,16 @@ public class Room {
             currentDate = currentDate.plusDays(1); // Increment by one day
         }
     }
+
+    public boolean isAvailableForDateRange(LocalDate startDate, LocalDate endDate) {
+        for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
+            if (bookingMap.containsKey(date) && bookingMap.get(date)) {
+                // Room is not available for this date
+                return false;
+            }
+        }
+        return true; // Room is available for the entire date range
+    }
 }
 
 

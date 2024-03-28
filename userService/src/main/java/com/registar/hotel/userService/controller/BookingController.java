@@ -30,7 +30,6 @@ public class BookingController {
         BookingDTO createdBooking = bookingService.saveBookingWithGuests(bookingWithGuestsDTO);
         return new ResponseEntity<>(createdBooking, HttpStatus.CREATED);
     }
-
     @GetMapping("/{id}")
     public ResponseEntity<BookingDTO> getBookingById(@PathVariable("id") int id) {
         Optional<BookingDTO> bookingOptional = bookingService.getBookingById(id);
