@@ -20,7 +20,7 @@ public class Guest {
     private int id;
     private String name;
     private String mobileNo;
-    private String govIDFilePath; // File path for government IDs
+    private String govtIDFilePath; // File path for government IDs
     private String pictureFilePath; // File path for guest picture
 
     @ManyToMany(mappedBy = "guests")

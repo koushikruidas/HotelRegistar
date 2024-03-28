@@ -39,6 +39,33 @@ public class FileUploadController {
         this.s3Service = s3Service;
     }
 
+    @PostMapping("/guest")
+    public ResponseEntity<String> createGuestWithGovID(@RequestParam("file") MultipartFile file, @RequestParam("name") String name, @RequestParam("mobileNo") String mobileNo, @RequestParam("govIDFilePath") String govIDFilePath, @RequestParam("pictureFilePath") String pictureFilePath) {
+        try {
+            // Upload the file for the guest
+            String uploadedFilePath = s3Service.uploadFileForGuest(file, name, mobileNo);
+
+            // Create the guest entity with file paths
+            GuestDTO guestDTO = new GuestDTO();
+            guestDTO.setName(name);
+            guestDTO.setMobileNo(mobileNo);
+            guestDTO.setGovtIDFilePath(uploadedFilePath);
+            guestDTO.setPictureFilePath(pictureFilePath);
+
+            // Save the guest
+            guestService.saveGuest(guestDTO);
+
+            return ResponseEntity.ok("Guest created successfully.");
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to create guest with govt. id file: " + e.getMessage());
+        }
+    }
+
+
+
+
+
     // Endpoint for uploading government IDs
     @PostMapping("/govtId")
     public ResponseEntity<String> uploadGovID(@RequestParam("file") MultipartFile file, @RequestParam("guestId") int guestId) {
@@ -73,7 +100,7 @@ public class FileUploadController {
 
             // Update the guest entity with the updated file path
             guestOptional.map(i -> {
-                i.setGovIDFilePath(keyName);
+                i.setGovtIDFilePath(keyName);
                 return i;
             });
             guestService.update(guestOptional.get());
@@ -91,13 +118,13 @@ public class FileUploadController {
         if (guest.getPictureFilePath() != null) {
             try {
                 // Generate a pre-signed URL for the file with a short expiration time
-                URL presignedUrl = s3Service.getPresignedUrl(guest.getGovIDFilePath());
+                URL presignedUrl = s3Service.getPresignedUrl(guest.getGovtIDFilePath());
 
                 // Use the pre-signed URL to download the file
                 RestTemplate restTemplate = new RestTemplate();
                 ResponseEntity<byte[]> response = restTemplate.exchange(presignedUrl.toURI(), HttpMethod.GET, null, byte[].class);
                 // Determine content type based on file extension
-                String contentType = URLConnection.guessContentTypeFromName(guest.getGovIDFilePath());
+                String contentType = URLConnection.guessContentTypeFromName(guest.getGovtIDFilePath());
 
                 return ResponseEntity
                         .ok()

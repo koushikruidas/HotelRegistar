@@ -15,8 +15,7 @@ public class GuestDTO {
     @Size(min = 10, max = 12, message = "mobile number must be 10 digits. with country code it can be 12 digits.")
     private String mobileNo;
 
-    private String govIDFilePath;
+    private String govtIDFilePath;
     private String pictureFilePath;
 
-    // Constructors, getters, and setters
 }

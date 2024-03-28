@@ -28,7 +28,7 @@ public class FileUploadService {
             // Update guest entity with file path
             Guest guest = guestRepository.findById(guestId).orElse(null);
             if (guest != null) {
-                guest.setGovIDFilePath(filePath);
+                guest.setGovtIDFilePath(filePath);
                 guestRepository.save(guest);
                 return new ResponseEntity<>("File uploaded successfully.", HttpStatus.OK);
             } else {

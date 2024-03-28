@@ -85,9 +85,21 @@ public class BookingServiceImpl implements BookingService {
                 .map(guestDTO -> {
                     Optional<Guest> existingGuestOptional = guestRepository
                             .findByNameAndMobileNo(guestDTO.getName(),guestDTO.getMobileNo());
-                    return existingGuestOptional.orElseGet(() -> modelMapper.map(guestDTO, Guest.class));
+                    return existingGuestOptional
+                            .map(existingGuest ->{
+                                if (guestDTO.getGovtIDFilePath() != null) {
+                                    existingGuest.setGovtIDFilePath(guestDTO.getGovtIDFilePath());
+                                }
+                                if (guestDTO.getPictureFilePath() != null) {
+                                    existingGuest.setPictureFilePath(guestDTO.getPictureFilePath());
+                                }
+                                return existingGuest;
+                            })
+                            .orElseGet(() -> modelMapper.map(guestDTO, Guest.class));
                 })
                 .collect(Collectors.toList());
+
+        guestRepository.saveAll(guests);
 
         Booking booking = modelMapper.map(bookingDTO, Booking.class);
         booking.setGuests(guests);
