@@ -22,11 +22,7 @@ public class GuestServiceImpl implements GuestService {
 
     @Override
     public GuestDTO saveGuest(GuestDTO guestDTO) {
-        Guest guest = new Guest();
-        guest.setName(guestDTO.getName());
-        guest.setMobileNo(guestDTO.getMobileNo());
-        guest.setGovIDFilePath(guestDTO.getGovIDFilePath());
-        guest.setPictureFilePath(guestDTO.getPictureFilePath());
+        Guest guest = modelMapper.map(guestDTO,Guest.class);
         Guest savedGuest = guestRepository.save(guest);
         return modelMapper.map(savedGuest,GuestDTO.class);
     }
@@ -67,5 +63,11 @@ public class GuestServiceImpl implements GuestService {
     @Override
     public void deleteGuest(int id) {
         guestRepository.deleteById(id);
+    }
+
+    @Override
+    public void update(GuestDTO guestDTO) {
+        Guest guest = modelMapper.map(guestDTO,Guest.class);
+        guestRepository.save(guest);
     }
 }

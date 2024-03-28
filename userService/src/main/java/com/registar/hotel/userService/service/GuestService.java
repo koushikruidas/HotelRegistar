@@ -14,4 +14,5 @@ public interface GuestService {
     Optional<List<GuestDTO>> getGuestByName(String name);
     List<GuestDTO> getAllGuests();
     void deleteGuest(int id);
+    void update(GuestDTO guestDTO);
 }

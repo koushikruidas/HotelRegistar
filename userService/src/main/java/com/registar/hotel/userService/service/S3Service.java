@@ -1,5 +1,7 @@
 package com.registar.hotel.userService.service;
 
+import com.registar.hotel.userService.exception.GuestNotFoundException;
+import com.registar.hotel.userService.model.GuestDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -11,26 +13,30 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetUrlRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectResponse;
+
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.Duration;
+import java.time.LocalDate;
+import java.util.Optional;
 
 @Service
 public class S3Service {
 
     @Value("${cloud.aws.credentials.access-key}")
     private String accessKey;
-
     @Value("${cloud.aws.credentials.secret-key}")
     private String secretKey;
-
     @Value("${cloud.aws.region.static}")
     private String region;
-
     @Value("${aws.s3.bucketName}")
     private String bucketName;
+
+    @Autowired
+    private GuestService guestService;
 
     public String uploadFile(MultipartFile file, String keyName) throws IOException {
         AwsBasicCredentials awsCredentials = AwsBasicCredentials.create(accessKey, secretKey);
@@ -48,6 +54,21 @@ public class S3Service {
             s3Client.putObject(request, RequestBody.fromBytes(file.getBytes()));
 
             return keyName;
+        }
+    }
+
+    // Define a new method in your service layer to handle file upload
+    public String uploadFileForGuest(MultipartFile file, int guestId) throws IOException {
+        // Get the guest name
+        Optional<GuestDTO> guestOptional = guestService.getGuestById(guestId);
+        if (guestOptional.isPresent()) {
+            GuestDTO guest = guestOptional.get();
+            // Generate a unique key for the file in the S3 bucket
+            String keyName = String.format("uploads/%s/%s/%s/%s", LocalDate.now(), guest.getMobileNo(), guest.getName(), file.getOriginalFilename());
+            // Upload the file to S3 bucket
+            return uploadFile(file, keyName);
+        } else {
+            throw new GuestNotFoundException("Guest not found for id: " + guestId);
         }
     }
 
@@ -74,4 +95,6 @@ public class S3Service {
             }
         }
     }
+
+
 }
