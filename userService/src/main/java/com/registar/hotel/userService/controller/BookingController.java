@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,8 +27,10 @@ public class BookingController {
     private ModelMapper modelMapper;
 
     @PostMapping("/create/booking/withGuest")
-    public ResponseEntity<BookingDTO> createBookingWithGuests(@Valid @RequestBody BookingWithGuestsDTO bookingWithGuestsDTO) {
-        BookingDTO createdBooking = bookingService.saveBookingWithGuests(bookingWithGuestsDTO);
+    public ResponseEntity<BookingDTO> createBookingWithGuests(@Valid @RequestPart BookingWithGuestsDTO bookingWithGuestsDTO,
+                                                              @RequestParam("govtId") MultipartFile[] govtIds,
+                                                              @RequestParam("picture") MultipartFile[] pictures) {
+        BookingDTO createdBooking = bookingService.saveBookingWithGuests(bookingWithGuestsDTO, govtIds, pictures);
         return new ResponseEntity<>(createdBooking, HttpStatus.CREATED);
     }
     @GetMapping("/{id}")

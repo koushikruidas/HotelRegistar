@@ -43,7 +43,7 @@ public class FileUploadController {
     }
 
     @PostMapping("/guest/files")
-    public ResponseEntity<String> createGuestWithGovID(@RequestParam("govtId") MultipartFile govtId, @RequestParam("picture") MultipartFile picture, @RequestPart GuestDTO guestDTO) {
+    public ResponseEntity<GuestDTO> createGuestWithGovID(@RequestParam("govtId") MultipartFile govtId, @RequestParam("picture") MultipartFile picture, @RequestPart GuestDTO guestDTO) {
         // Upload the files in parallel
         CompletableFuture<String> govtIdUploadFuture = uploadFileAsync(govtId,guestDTO.getName(),guestDTO.getMobileNo());
 
@@ -52,26 +52,10 @@ public class FileUploadController {
         CompletableFuture.allOf(govtIdUploadFuture, picUploadFuture).join();
 
 
+        guestDTO.setPictureFilePath(picUploadFuture.join());
+        guestDTO.setGovtIDFilePath(govtIdUploadFuture.join());
 
-
-        Optional<Guest> existingGuest = guestService.findByNameAndMobile(guestDTO.getName(),guestDTO.getMobileNo());
-        if (existingGuest.isPresent()){
-            GuestDTO existingGuestDTO = modelMapper.map(existingGuest,GuestDTO.class);
-
-            // Create the guest entity with file paths
-            existingGuestDTO.setGovtIDFilePath(govtIdUploadFuture.join());
-            existingGuestDTO.setPictureFilePath(picUploadFuture.join());
-
-            guestService.saveGuest(existingGuestDTO);
-        } else {
-            // Create the guest entity with file paths
-            guestDTO.setGovtIDFilePath(govtIdUploadFuture.join());
-            guestDTO.setPictureFilePath(picUploadFuture.join());
-
-            // Save the guest
-            guestService.saveGuest(guestDTO);
-        }
-        return ResponseEntity.ok("Guest created successfully.");
+        return ResponseEntity.ok(guestDTO);
     }
 
     // Helper method to upload file asynchronously

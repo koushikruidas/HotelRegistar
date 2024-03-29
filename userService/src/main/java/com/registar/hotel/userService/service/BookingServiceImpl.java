@@ -12,14 +12,19 @@ import com.registar.hotel.userService.model.RoomDTO;
 import com.registar.hotel.userService.repository.BookingRepository;
 import com.registar.hotel.userService.repository.GuestRepository;
 import com.registar.hotel.userService.repository.RoomRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -33,7 +38,11 @@ public class BookingServiceImpl implements BookingService {
     @Autowired
     private GuestRepository guestRepository;
     @Autowired
+    private S3Service s3Service;
+    @Autowired
     private ModelMapper modelMapper;
+    @PersistenceContext
+    private EntityManager entityManager;
 
    /* @Override
     public BookingDTO saveBookingWithGuests(BookingWithGuestsDTO bookingWithGuestsDTO) {
@@ -108,12 +117,38 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional
-    public BookingDTO saveBookingWithGuests(BookingWithGuestsDTO bookingWithGuestsDTO) {
+    public BookingDTO saveBookingWithGuests(BookingWithGuestsDTO bookingWithGuestsDTO,
+                                            MultipartFile[] govtIds, MultipartFile[] pictures) {
         BookingDTO bookingDTO = bookingWithGuestsDTO.getBooking();
         List<GuestDTO> guestDTOs = bookingWithGuestsDTO.getGuests();
 
         LocalDate checkInDate = bookingDTO.getCheckInDate();
         LocalDate checkOutDate = bookingDTO.getCheckOutDate();
+
+        // Upload government IDs and pictures for each guest
+        List<CompletableFuture<String>> govtIdUploadFutures = new ArrayList<>();
+        List<CompletableFuture<String>> picUploadFutures = new ArrayList<>();
+
+        for (int i = 0; i < guestDTOs.size(); i++) {
+            GuestDTO guestDTO = guestDTOs.get(i);
+            MultipartFile govtId = govtIds[i];
+            MultipartFile picture = pictures[i];
+
+            govtIdUploadFutures.add(uploadFileAsync(govtId, guestDTO.getName(), guestDTO.getMobileNo()));
+            picUploadFutures.add(uploadFileAsync(picture, guestDTO.getName(), guestDTO.getMobileNo()));
+        }
+
+        // Wait for all file uploads to complete
+        CompletableFuture.allOf(govtIdUploadFutures.toArray(new CompletableFuture[0])).join();
+        CompletableFuture.allOf(picUploadFutures.toArray(new CompletableFuture[0])).join();
+
+        // Set file paths for each guest
+        for (int i = 0; i < guestDTOs.size(); i++) {
+            GuestDTO guestDTO = guestDTOs.get(i);
+            guestDTO.setGovtIDFilePath(govtIdUploadFutures.get(i).join());
+            guestDTO.setPictureFilePath(picUploadFutures.get(i).join());
+        }
+
 
         // Fetch existing guests from the database
         Map<String, Guest> existingGuestsMap = fetchExistingGuests(guestDTOs);
@@ -122,7 +157,7 @@ public class BookingServiceImpl implements BookingService {
         List<Guest> guests = mapGuestDTOsToEntities(guestDTOs, existingGuestsMap);
 
         // Save all guests in a batch operation
-        guestRepository.saveAll(guests);
+        List<Guest> guests1 = guestRepository.saveAll(guests);
 
         // Check room availability in a batch operation
         List<Room> availableRooms = findAvailableRooms(bookingWithGuestsDTO.getBooking());
@@ -132,10 +167,21 @@ public class BookingServiceImpl implements BookingService {
         double totalPrice = calculateTotalPrice(availableRooms, bookingDTO.getRoomPrice(), checkInDate, checkOutDate);
 
         // Create and save booking
-        Booking booking = createBooking(bookingDTO, guests, availableRooms, totalPrice);
+        Booking booking = createBooking(bookingDTO, guests1, availableRooms, totalPrice);
         Booking savedBooking = bookingRepository.save(booking);
         updateRoomAvailabilityForBooking(savedBooking);
         return modelMapper.map(savedBooking, BookingDTO.class);
+    }
+
+    // Helper method to upload file asynchronously
+    private CompletableFuture<String> uploadFileAsync(MultipartFile file, String name, String mobileNo) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return s3Service.uploadFileForGuest(file, name, mobileNo);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     @Transactional(readOnly = true)
@@ -177,7 +223,8 @@ public class BookingServiceImpl implements BookingService {
                     if (existingGuest != null) {
                         // Update existing guest if available
                         updateExistingGuest(existingGuest, guestDTO);
-                        return existingGuest;
+                        // Reattach the existing guest
+                        return entityManager.merge(existingGuest);
                     } else {
                         // Create new guest entity
                         return modelMapper.map(guestDTO, Guest.class);
@@ -221,13 +268,16 @@ public class BookingServiceImpl implements BookingService {
         LocalDate checkInDate = booking.getCheckInDate();
         LocalDate checkOutDate = booking.getCheckOutDate();
 
+        List<Room> managedRooms = new ArrayList<>();
         for (Room room : bookedRooms){
             // Update room availability for the booked date range
             room.setAvailabilityForDateRange(checkInDate, checkOutDate, true);
+            managedRooms.add(entityManager.merge(room)); // Reattach the room
         }
         // Save all the updated rooms in a single batch operation
-        roomRepository.saveAll(bookedRooms);
+        roomRepository.saveAll(managedRooms);
     }
+
 
     @Override
     public Optional<BookingDTO> getBookingById(int id) {
