@@ -10,6 +10,7 @@ import com.register.hotel.security.model.response.ApiResponse;
 import com.register.hotel.security.model.response.AuthenticationResponse;
 import com.register.hotel.security.repository.RoleRepository;
 import com.register.hotel.security.repository.UserRepository;
+import com.register.hotel.security.service.BlockedTokenService;
 import com.register.hotel.security.utility.AuthProvider;
 import com.register.hotel.security.utility.RoleName;
 import com.register.hotel.security.utility.TokenProvider;
@@ -23,10 +24,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
@@ -54,6 +52,8 @@ public class AuthController {
 
     @Autowired
     private TokenProvider tokenProvider;
+    @Autowired
+    private BlockedTokenService blockedTokenService;
 
     @PostMapping("/login")
     public ResponseEntity<AuthenticationResponse> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
@@ -104,6 +104,19 @@ public class AuthController {
 
         return ResponseEntity.created(location)
                 .body(new ApiResponse(true, "User registered successfully"));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(@RequestHeader("Authorization") String token) {
+        // Check if the string contains "Bearer "
+        if (token.contains("Bearer ")) {
+            // If it does, remove "Bearer " from the string
+            token = token.replace("Bearer ", "");
+        }
+
+        // Add the token to the blocklist
+        blockedTokenService.blockToken(token);
+        return new ResponseEntity<>("Logged out successfully!!",HttpStatus.NO_CONTENT);
     }
 
 }
