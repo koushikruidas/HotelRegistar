@@ -6,5 +6,5 @@ import lombok.Data;
 public class CreateHotelRequest {
     private String name;
     private String address;
-    private String ownerUserName;
+    private String ownerEmail;
 }

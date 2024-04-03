@@ -9,9 +9,9 @@ import java.util.Optional;
 public interface HotelService {
     HotelDTO saveHotel(HotelDTO hotelDTO);
     HotelDTO saveHotel(CreateHotelRequest hotelRequest);
-    Optional<HotelDTO> getHotelById(int id);
-    List<HotelDTO> getAllHotelsByOwnerId(int userId);
+    Optional<HotelDTO> getHotelById(Long id);
+    List<HotelDTO> getAllHotelsByOwnerId(Long userId);
     List<HotelDTO> getAllHotels();
-    void deleteHotel(int id);
-    Optional<HotelDTO> updateHotel(int hotelId, CreateHotelRequest hotelRequest);
+    void deleteHotel(Long id);
+    Optional<HotelDTO> updateHotel(Long hotelId, CreateHotelRequest hotelRequest);
 }

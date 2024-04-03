@@ -10,9 +10,7 @@ import com.registar.hotel.userService.utility.UserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -37,7 +35,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Optional<UserDTO> getUserById(int userId) {
+    public Optional<UserDTO> getUserById(Long userId) {
         Optional<User> userOptional = userRepository.findById(userId);
         return userOptional.map(userMapper::toDto);
     }
@@ -49,30 +47,30 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Optional<UserDTO> updateUser(int userId, UpdateUserRequest userDTO) {
+    public Optional<UserDTO> updateUser(Long userId, UpdateUserRequest userDTO) {
         Optional<User> existingUser = userRepository.findById(userId);
         if (existingUser.isPresent()) {
             User user = existingUser.get();
-            String newUsername = userDTO.getUsername();
-            String newPassword = userDTO.getPassword();
+            String newFirstName = userDTO.getFirstName();
+            String newLastName = userDTO.getLastName();
             String newEmail = userDTO.getEmail();
-            Role newRole = userDTO.getRole();
+            Set<Role> newRole = userDTO.getRoles();
 
-            if (!newUsername.isEmpty() && !newUsername.isBlank()) {
-                user.setUsername(newUsername);
+            if (!newFirstName.isEmpty() && !newFirstName.isBlank()) {
+                user.setFirstName(newFirstName);
             }
-            if (!newPassword.isEmpty() && !newPassword.isBlank()) {
-                user.setPassword(newPassword);
+            if (!newLastName.isEmpty() && !newLastName.isBlank()) {
+                user.setLastName(newLastName);
             }
             if (!newEmail.isEmpty() && !newEmail.isBlank()) {
                 user.setEmail(newEmail);
             }
 
             // Check if the new role is not null and is valid
-            if (newRole != null && Arrays.asList(Role.values()).contains(newRole)) {
-                user.setRole(newRole);
+            if (newRole != null && new HashSet<>(Arrays.asList(Role.values())).containsAll(newRole)) {
+                user.setRoles(newRole);
             } else {
-                logger.warning("Role not found, hence keeping the previous role: "+user.getRole());
+                logger.warning("Role not found, hence keeping the previous role: "+user.getRoles());
             }
             // Update other fields as needed
             User updatedUser = userRepository.save(existingUser.get());
@@ -82,7 +80,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void deleteUser(int userId) {
+    public void deleteUser(Long userId) {
         userRepository.deleteById(userId);
     }
 }

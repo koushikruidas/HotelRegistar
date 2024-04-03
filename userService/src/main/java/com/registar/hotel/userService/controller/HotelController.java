@@ -38,7 +38,7 @@ public class HotelController {
     }
 
     @PostMapping("/addRooms")
-    public ResponseEntity<HotelDTO> addRooms(@RequestParam int hotelId,
+    public ResponseEntity<HotelDTO> addRooms(@RequestParam Long hotelId,
                                              @RequestBody List<CreateRoomRequest> rooms){
         Optional<HotelDTO> hotelOptional = hotelService.getHotelById(hotelId);
         if (hotelOptional.isPresent()) {
@@ -61,14 +61,14 @@ public class HotelController {
     }
 
     @GetMapping("/getById/{id}")
-    public ResponseEntity<HotelDTO> getHotelById(@PathVariable("id") int id) {
+    public ResponseEntity<HotelDTO> getHotelById(@PathVariable("id") Long id) {
         Optional<HotelDTO> hotelOptional = hotelService.getHotelById(id);
         return hotelOptional.map(hotelDTO -> new ResponseEntity<>(hotelDTO, HttpStatus.OK))
                             .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
     @GetMapping("/get/byOwner")
-    public ResponseEntity<List<HotelDTO>> getAllHotelsByUserId(@RequestParam("ownerId") int ownerId) {
+    public ResponseEntity<List<HotelDTO>> getAllHotelsByUserId(@RequestParam("ownerId") Long ownerId) {
         List<HotelDTO> hotels = hotelService.getAllHotelsByOwnerId(ownerId);
         if (hotels != null) {
             return new ResponseEntity<>(hotels, HttpStatus.OK);
@@ -84,14 +84,14 @@ public class HotelController {
     }
 
     @PutMapping("update/{hotelId}")
-    public ResponseEntity<HotelDTO> updateHotel(@PathVariable int hotelId, @RequestBody CreateHotelRequest hotelRequest) {
+    public ResponseEntity<HotelDTO> updateHotel(@PathVariable Long hotelId, @RequestBody CreateHotelRequest hotelRequest) {
         Optional<HotelDTO> updatedHotel = hotelService.updateHotel(hotelId, hotelRequest);
         return updatedHotel.map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<Void> deleteHotel(@PathVariable("id") int id) {
+    public ResponseEntity<Void> deleteHotel(@PathVariable("id") Long id) {
         hotelService.deleteHotel(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
