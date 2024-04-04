@@ -1,6 +1,7 @@
 package com.registar.hotel.userService.service;
 
 import com.registar.hotel.userService.entity.Role;
+import com.registar.hotel.userService.entity.RoleName;
 import com.registar.hotel.userService.entity.User;
 import com.registar.hotel.userService.model.CreateUserRequest;
 import com.registar.hotel.userService.model.UpdateUserRequest;
@@ -19,12 +20,15 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+
+    private final RoleService roleService;
     private Logger logger = Logger.getLogger("UserServiceImpl");
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, UserMapper userMapper) {
+    public UserServiceImpl(UserRepository userRepository, UserMapper userMapper, RoleService roleService) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
+        this.roleService = roleService;
     }
 
     @Override
@@ -66,11 +70,19 @@ public class UserServiceImpl implements UserService {
                 user.setEmail(newEmail);
             }
 
-            // Check if the new role is not null and is valid
-            if (newRole != null && new HashSet<>(Arrays.asList(Role.values())).containsAll(newRole)) {
-                user.setRoles(newRole);
+            // Check if the new role is not null
+            if (newRole != null) {
+                // Retrieve all available roles from the database
+                Set<Role> allRoles = roleService.getAllRoles();
+
+                // Check if all roles in newRole are valid (exist in the database)
+                if (allRoles.containsAll(newRole)) {
+                    user.setRoles(newRole);
+                } else {
+                    logger.warning("Invalid role(s) provided, keeping the previous role: " + user.getRoles());
+                }
             } else {
-                logger.warning("Role not found, hence keeping the previous role: "+user.getRoles());
+                logger.warning("New role is null, keeping the previous role: " + user.getRoles());
             }
             // Update other fields as needed
             User updatedUser = userRepository.save(existingUser.get());

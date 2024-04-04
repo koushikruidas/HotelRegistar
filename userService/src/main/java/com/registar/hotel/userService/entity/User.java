@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import jakarta.persistence.*;
+
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -26,7 +28,11 @@ public class User {
     @Email
     private String email;
 
-    @Enumerated(EnumType.STRING)
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles;
 
     private String imageUrl;

@@ -34,7 +34,7 @@ public class UserPrincipal implements UserDetails {
 
     public List<GrantedAuthority> mapRolesToAuthorities(Set<Role> roles) {
         return roles.stream()
-                .map(role -> new SimpleGrantedAuthority(role.name()))
+                .map(role -> new SimpleGrantedAuthority(role.getName().name()))
                 .collect(Collectors.toList());
     }
 
@@ -44,7 +44,7 @@ public class UserPrincipal implements UserDetails {
         int i = 0;
         for (Role role : roles) {
         	i++;
-        	logger.debug(user.getFirstName()+" role.name(): "+role.name()+" Count: "+i);
+        	logger.debug(user.getFirstName()+" role.name(): "+role.getName().name()+" Count: "+i);
         }
         return new UserPrincipal(
                 user.getId(),

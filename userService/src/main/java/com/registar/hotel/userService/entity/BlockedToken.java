@@ -4,7 +4,10 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 @Entity
 @Table(name = "blocked_tokens")
@@ -22,6 +25,7 @@ public class BlockedToken {
 
     public BlockedToken(String token) {
         this.token = token;
-        this.blockedAt = LocalDateTime.now();
+        // Get the current time in UTC
+        this.blockedAt = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
     }
 }

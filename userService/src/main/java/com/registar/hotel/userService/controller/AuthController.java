@@ -10,6 +10,7 @@ import com.registar.hotel.userService.model.response.AuthenticationResponse;
 import com.registar.hotel.userService.repository.UserRepository;
 import com.registar.hotel.userService.securityUtil.TokenProvider;
 import com.registar.hotel.userService.service.BlockedTokenService;
+import com.registar.hotel.userService.service.RoleService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -48,6 +49,9 @@ public class AuthController {
     @Autowired
     private BlockedTokenService blockedTokenService;
 
+    @Autowired
+    private RoleService roleService;
+
     @PostMapping("/login")
     public ResponseEntity<AuthenticationResponse> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
 
@@ -78,9 +82,7 @@ public class AuthController {
         user.setEmail(signUpRequest.getEmail());
         user.setPassword(signUpRequest.getPassword());
 
-        Set<Role> roles = new HashSet<Role>();
-        roles.add(Role.HOTEL_OWNER);
-        roles.add(Role.EMPLOYEE);
+        Set<Role> roles = roleService.getDefaultRoles();
         user.setRoles(roles);
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
