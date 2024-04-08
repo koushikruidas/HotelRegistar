@@ -1,5 +1,6 @@
 package com.registar.hotel.userService.config;
 
+import com.registar.hotel.userService.exception.CustomAccessDeniedHandler;
 import com.registar.hotel.userService.securityUtil.CustomUserDetailsService;
 import com.registar.hotel.userService.securityUtil.JwtAuthenticationFilter;
 import org.slf4j.Logger;
@@ -29,6 +30,11 @@ import org.springframework.web.cors.CorsConfiguration;
 public class JwtSecurityConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtSecurityConfig.class);
+
+    @Bean
+    public CustomAccessDeniedHandler accessDeniedHandler(){
+        return new CustomAccessDeniedHandler();
+    }
 
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
@@ -67,6 +73,7 @@ public class JwtSecurityConfig {
                                     "/v3/api-docs/**").permitAll()
                             .anyRequest().authenticated();
                 })
+                .exceptionHandling(exception -> exception.accessDeniedHandler(accessDeniedHandler()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .formLogin(Customizer.withDefaults())

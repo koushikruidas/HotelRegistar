@@ -2,6 +2,7 @@ package com.registar.hotel.userService.service;
 
 import com.registar.hotel.userService.entity.Role;
 import com.registar.hotel.userService.entity.RoleName;
+import com.registar.hotel.userService.exception.ResourceNotFoundException;
 import com.registar.hotel.userService.repository.RoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,7 +27,7 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public Role getRoleByName(RoleName roleName) {
-        return roleRepository.findByName(roleName);
+        return roleRepository.findByName(roleName).orElseThrow(() -> new ResourceNotFoundException("Role not found."));
     }
 
     @Override

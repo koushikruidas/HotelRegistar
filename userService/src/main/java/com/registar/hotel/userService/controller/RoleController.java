@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 public class RoleController {
 
     @GetMapping("/roles")
-    @RolesAllowed("ROLE_ADMIN")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public List<String> getRoles() {
         // Assume you have a predefined list of roles or you fetch them from a database
         List<RoleName> roles = Arrays.asList(RoleName.values());
