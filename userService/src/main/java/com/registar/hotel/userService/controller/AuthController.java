@@ -1,15 +1,18 @@
 package com.registar.hotel.userService.controller;
 
+import com.registar.hotel.userService.entity.RefreshToken;
 import com.registar.hotel.userService.entity.Role;
 import com.registar.hotel.userService.entity.User;
 import com.registar.hotel.userService.exception.BadRequestException;
 import com.registar.hotel.userService.model.request.LoginRequest;
+import com.registar.hotel.userService.model.request.RefreshTokenRequest;
 import com.registar.hotel.userService.model.request.SignUpRequest;
 import com.registar.hotel.userService.model.response.ApiResponse;
 import com.registar.hotel.userService.model.response.AuthenticationResponse;
 import com.registar.hotel.userService.repository.UserRepository;
 import com.registar.hotel.userService.securityUtil.TokenProvider;
 import com.registar.hotel.userService.service.BlockedTokenService;
+import com.registar.hotel.userService.service.RefreshTokenService;
 import com.registar.hotel.userService.service.RoleService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +55,9 @@ public class AuthController {
     @Autowired
     private RoleService roleService;
 
+    @Autowired
+    private RefreshTokenService refreshTokenService;
+
     @PostMapping("/login")
     public ResponseEntity<AuthenticationResponse> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
 
@@ -65,8 +71,15 @@ public class AuthController {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         String token = tokenProvider.generateToken(authentication);
-//        return ResponseEntity.ok(new AuthenticationResponse(token));
-        return new ResponseEntity<>(new AuthenticationResponse(token), HttpStatus.OK);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(loginRequest.getEmail());
+
+        AuthenticationResponse response = AuthenticationResponse.builder()
+                .accessToken(token)
+                .token(refreshToken.getToken())
+                .tokenType("Bearer")
+                .build();
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PostMapping("/signup")
@@ -108,6 +121,27 @@ public class AuthController {
         // Add the token to the blocklist
         blockedTokenService.blockToken(token);
         return new ResponseEntity<>("Logged out successfully!!",HttpStatus.OK);
+    }
+
+    @PostMapping("/refreshToken")
+    public AuthenticationResponse refreshToken(@RequestBody RefreshTokenRequest refreshTokenRequest) {
+        return refreshTokenService.findByToken(refreshTokenRequest.getToken())
+                .map(refreshTokenService::verifyExpiration)
+                .map(RefreshToken::getUser)
+                .map(userInfo -> {
+                    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+                    if (authentication != null && authentication.isAuthenticated()) {
+                        String accessToken = tokenProvider.generateToken(authentication);
+                        return AuthenticationResponse.builder()
+                                .accessToken(accessToken)
+                                .token(refreshTokenRequest.getToken())
+                                .tokenType("Bearer")
+                                .build();
+                    } else {
+                        throw new RuntimeException("Authentication not found or not authenticated!");
+                    }
+                }).orElseThrow(() -> new RuntimeException(
+                        "Refresh token is not in database!"));
     }
 
 }
