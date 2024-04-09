@@ -11,6 +11,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AuthenticationResponse {
     private String accessToken;
-    private String tokenType = "Bearer";
+    private String tokenType;
     private String token;
 }
