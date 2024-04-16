@@ -52,7 +52,7 @@ public class JwtSecurityConfig {
                 .cors(cors -> cors.configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
                     config.setAllowCredentials(true);
-                    config.addAllowedOrigin("http://localhost:9000"); // Remove wildcard character
+                    config.addAllowedOrigin("*"); // Allows all origin
                     return config;
                 }))
                 .csrf(AbstractHttpConfigurer::disable)
