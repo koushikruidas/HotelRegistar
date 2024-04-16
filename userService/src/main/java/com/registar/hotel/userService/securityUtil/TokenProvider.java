@@ -1,23 +1,20 @@
 package com.registar.hotel.userService.securityUtil;
 
 import com.registar.hotel.userService.exception.UserLoggedOutException;
+import com.registar.hotel.userService.model.UserDTO;
 import com.registar.hotel.userService.service.BlockedTokenService;
+import com.registar.hotel.userService.service.RoleService;
+import com.registar.hotel.userService.service.UserService;
 import io.jsonwebtoken.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Component
 public class TokenProvider {
@@ -34,6 +31,11 @@ public class TokenProvider {
 
     @Autowired
     private BlockedTokenService blockedTokenService;
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private RoleService roleService;
 
     public String generateToken(Authentication authentication) {
 
@@ -85,17 +87,15 @@ public class TokenProvider {
 //    ======================================================================
 
     //generate token for user
-    public String generateToken1(Authentication authentication) {
+    public String generateToken(Long userId) {
         final Map<String, Object> claims = new HashMap<>();
-        final UserDetails user = (UserDetails) authentication.getPrincipal();
-
-        final List<String> roles = authentication.getAuthorities()
-                .stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.toList());
-
-        claims.put(ROLES,roles);
-        return generateToken(claims, user.getUsername());
+        Optional<UserDTO> userById = userService.getUserById(userId);
+        // Handle the case where the user might not be present
+        if (userById.isEmpty()) {
+            throw new IllegalArgumentException("No user found with ID: " + userId);
+        }
+        claims.put(ROLES,userById.get().getRoles());
+        return generateToken(claims, userId);
     }
 
     //while creating the token -
@@ -103,11 +103,11 @@ public class TokenProvider {
     //2. Sign the JWT using the HS512 algorithm and secret key.
     //3. According to JWS Compact Serialization(https://tools.ietf.org/html/draft-ietf-jose-json-web-signature-41#section-3.1)
     //   compaction of the JWT to a URL-safe string
-    private String generateToken(Map<String, Object> claims, String subject) {
+    private String generateToken(Map<String, Object> claims, Long subject) {
         final long now = System.currentTimeMillis();
         return Jwts.builder()
                 .setClaims(claims)
-                .setSubject(subject)
+                .setSubject(Long.toString(subject))
                 .setIssuedAt(new Date(now))
                 .setExpiration(new Date(now + jwtExpirationInMs))
                 .signWith(SignatureAlgorithm.HS512, jwtSecret).compact();

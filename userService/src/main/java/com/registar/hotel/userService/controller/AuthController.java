@@ -4,6 +4,8 @@ import com.registar.hotel.userService.entity.RefreshToken;
 import com.registar.hotel.userService.entity.Role;
 import com.registar.hotel.userService.entity.User;
 import com.registar.hotel.userService.exception.BadRequestException;
+import com.registar.hotel.userService.exception.ResourceNotFoundException;
+import com.registar.hotel.userService.model.RefreshTokenResponse;
 import com.registar.hotel.userService.model.request.LoginRequest;
 import com.registar.hotel.userService.model.request.RefreshTokenRequest;
 import com.registar.hotel.userService.model.request.SignUpRequest;
@@ -16,6 +18,7 @@ import com.registar.hotel.userService.service.RefreshTokenService;
 import com.registar.hotel.userService.service.RoleService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -29,11 +32,15 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
+
+    @Value("${app.jwtSecret}")
+    private String secret;
 
     @Autowired
     private AuthenticationManager authenticationManager;
@@ -124,24 +131,25 @@ public class AuthController {
     }
 
     @PostMapping("/refreshToken")
-    public AuthenticationResponse refreshToken(@RequestBody RefreshTokenRequest refreshTokenRequest) {
+    public AuthenticationResponse refreshToken(@RequestParam Long userId, @RequestBody RefreshTokenRequest refreshTokenRequest) {
         return refreshTokenService.findByToken(refreshTokenRequest.getToken())
                 .map(refreshTokenService::verifyExpiration)
                 .map(RefreshToken::getUser)
                 .map(userInfo -> {
-                    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-                    if (authentication != null && authentication.isAuthenticated()) {
-                        String accessToken = tokenProvider.generateToken(authentication);
-                        return AuthenticationResponse.builder()
-                                .accessToken(accessToken)
-                                .token(refreshTokenRequest.getToken())
-                                .tokenType("Bearer")
-                                .build();
-                    } else {
-                        throw new RuntimeException("Authentication not found or not authenticated!");
-                    }
-                }).orElseThrow(() -> new RuntimeException(
+                            String accessToken = tokenProvider.generateToken(userId);
+                            return AuthenticationResponse.builder()
+                                    .accessToken(accessToken)
+                                    .token(refreshTokenRequest.getToken())
+                                    .tokenType("Bearer")
+                                    .build();
+                        }
+                ).orElseThrow(() -> new RuntimeException(
                         "Refresh token is not in database!"));
+    }
+    @GetMapping("/getRefreshToken")
+    public ResponseEntity<RefreshTokenResponse> getRefreshToken(@RequestParam Long userId){
+        Optional<RefreshTokenResponse> token = refreshTokenService.findByUserId(userId);
+        return new ResponseEntity<>(token.orElseThrow(() -> new ResourceNotFoundException("Token not found")), HttpStatus.OK);
     }
 
 }
