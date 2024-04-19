@@ -41,29 +41,4 @@ public class EmployeeController {
      * @body EmploymentRequest with List of hotel IDs where the employee is to be employed.
      * @return ResponseEntity with status.
      */
-    @PreAuthorize("hasRole('ROLE_OWNER')")
-    @PostMapping("/setHotelsEmployed")
-    public ResponseEntity<String> setHotelsEmployedAt(@RequestBody EmploymentRequest request) {
-        Optional<User> userOptional = userService.getUserByEmail(request.getEmployeeUsername());
-
-        if (userOptional.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
-        }
-
-        User user = userOptional.get();
-        Set<Hotel> hotels = new HashSet<>();
-
-        for (Long id : request.getHotelIds()) {
-            Optional<HotelDTO> hotel = hotelService.getHotelById(id);
-            if (hotel.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Hotel with ID " + id + " not found");
-            }
-            hotels.add(modelMapper.map(hotel, Hotel.class));
-        }
-
-        user.setHotelsEmployedAt(hotels);
-        userService.save(user);
-        
-        return ResponseEntity.ok("Hotels set for employee successgit statfully");
-    }
 }

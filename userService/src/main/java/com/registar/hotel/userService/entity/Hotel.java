@@ -24,7 +24,5 @@ public class Hotel {
     private User owner;
     @OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL)
     private List<Room> rooms;
-    @ManyToMany(mappedBy = "hotelsEmployedAt")
-    private Set<User> employees; // Users employed at this hotel
 }
 

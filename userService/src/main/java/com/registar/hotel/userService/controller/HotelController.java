@@ -69,13 +69,7 @@ public class HotelController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = ((UserDetails) authentication.getPrincipal()).getUsername();
         Optional<User> user = userService.getUserByEmail(username);
-        if (user.isPresent()) {
-            Set<Hotel> hotels = user.get().getHotelsEmployedAt();
-            List<HotelDTO> hotelDTOs = hotels.stream()
-                    .map(hotel -> modelMapper.map(hotel,HotelDTO.class)) // Assuming a method to convert hotel entity to DTO
-                    .collect(Collectors.toList());
-            return ResponseEntity.ok(hotelDTOs);
-        }
+
         return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
 

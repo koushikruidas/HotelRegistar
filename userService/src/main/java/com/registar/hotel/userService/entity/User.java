@@ -40,13 +40,6 @@ public class User {
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL)
     private List<Hotel> hotels; // If owner
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "hotel_employees",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "hotel_id"))
-    private Set<Hotel> hotelsEmployedAt; // Hotels where the user is employed
-
     private boolean isAccountExpired = false;
     private boolean isAccountLocked = false;
     private boolean isCredentialsExpired = false;

@@ -117,8 +117,4 @@ public class HotelServiceImpl implements HotelService {
         }
         return Optional.empty();
     }
-
-    public Set<Hotel> getHotelsForEmployee(User employee) {
-        return employee.getHotelsEmployedAt();
-    }
 }
