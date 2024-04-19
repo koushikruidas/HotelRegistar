@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import jakarta.persistence.*;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @AllArgsConstructor
@@ -23,5 +24,7 @@ public class Hotel {
     private User owner;
     @OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL)
     private List<Room> rooms;
+    @ManyToMany(mappedBy = "hotelsEmployedAt")
+    private Set<User> employees; // Users employed at this hotel
 }
 

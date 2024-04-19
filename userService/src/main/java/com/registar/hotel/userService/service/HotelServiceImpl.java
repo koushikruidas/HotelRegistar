@@ -57,8 +57,8 @@ public class HotelServiceImpl implements HotelService {
     }
 
     @Override
-    public List<HotelDTO> getAllHotelsByOwnerId(Long ownerId) {
-        Optional<User> user = userRepository.findById(ownerId);
+    public List<HotelDTO> getAllHotelsByOwner(String username) {
+        Optional<User> user = userRepository.findByEmail(username);
         user.ifPresent(i -> {
             hotelRepository.findByOwner(i);
         });
@@ -118,4 +118,7 @@ public class HotelServiceImpl implements HotelService {
         return Optional.empty();
     }
 
+    public Set<Hotel> getHotelsForEmployee(User employee) {
+        return employee.getHotelsEmployedAt();
+    }
 }
