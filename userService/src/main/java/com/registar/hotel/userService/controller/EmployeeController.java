@@ -64,6 +64,6 @@ public class EmployeeController {
         user.setHotelsEmployedAt(hotels);
         userService.save(user);
         
-        return ResponseEntity.ok("Hotels set for employee successfully");
+        return ResponseEntity.ok("Hotels set for employee successgit statfully");
     }
 }
