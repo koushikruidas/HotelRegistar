@@ -1,11 +1,17 @@
 package com.registar.hotel.userService.controller;
 
+import com.registar.hotel.userService.entity.Hotel;
+import com.registar.hotel.userService.entity.Room;
 import com.registar.hotel.userService.model.CreateRoomRequest;
+import com.registar.hotel.userService.model.HotelDTO;
 import com.registar.hotel.userService.model.RoomDTO;
+import com.registar.hotel.userService.model.request.UpdateRoomRequest;
+import com.registar.hotel.userService.service.HotelService;
 import com.registar.hotel.userService.service.RoomService;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -13,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -24,7 +31,10 @@ public class RoomController {
 
     @Autowired
     private RoomService roomService;
-
+    @Autowired
+    private HotelService hotelService;
+    @Autowired
+    private ModelMapper modelMapper;
     @GetMapping("/getRoomById/{id}")
     public ResponseEntity<RoomDTO> getRoomById(@PathVariable("id") int id) {
         Optional<RoomDTO> roomOptional = roomService.getRoomById(id);
@@ -36,6 +46,59 @@ public class RoomController {
     public ResponseEntity<List<RoomDTO>> getAllRooms(@RequestParam int id) {
         List<RoomDTO> allRooms = roomService.getAllRooms(id);
         return new ResponseEntity<>(allRooms, HttpStatus.OK);
+    }
+
+    @PostMapping("/")
+    public ResponseEntity<HotelDTO> addRooms(@RequestParam Long hotelId,
+                                             @RequestBody List<CreateRoomRequest> rooms){
+        Optional<HotelDTO> hotelOptional = hotelService.getHotelById(hotelId);
+        if (hotelOptional.isPresent()) {
+            HotelDTO hotelDTO = hotelOptional.get();
+
+            // changing the list to RoomDTO types
+            List<RoomDTO> roomsDto = rooms.stream()
+                    .map(room -> {
+                        Room createdRoom = roomService.createRoom(room);
+                        createdRoom.setHotel(modelMapper.map(hotelDTO, Hotel.class));
+                        return modelMapper.map(createdRoom, RoomDTO.class);
+                    }).toList();
+
+            hotelDTO.setRooms(roomsDto);
+            hotelService.saveHotel(hotelDTO);
+            return ResponseEntity.ok(hotelDTO);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PutMapping("/rooms")
+    public ResponseEntity<HotelDTO> updateRooms(@RequestParam Long hotelId,
+                                                @RequestBody List<UpdateRoomRequest> rooms) {
+        Optional<HotelDTO> hotelOptional = hotelService.getHotelById(hotelId);
+        if (hotelOptional.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        HotelDTO hotelDTO = hotelOptional.get();
+        List<RoomDTO> updatedRooms = new ArrayList<>();
+
+        for (UpdateRoomRequest roomRequest : rooms) {
+            Optional<RoomDTO> roomOptional = roomService.getRoomById(roomRequest.getId());
+            if (roomOptional.isPresent()) {
+                Room room = modelMapper.map(roomOptional.get(), Room.class);
+                modelMapper.map(roomRequest, room); // Update the room entity with new data
+                room.setHotel(modelMapper.map(hotelDTO, Hotel.class)); // Re-associate the room with the hotel
+                roomService.save(room);
+                updatedRooms.add(modelMapper.map(room, RoomDTO.class));
+            } else {
+                // Optionally, handle the case where a room ID does not exist.
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
+        }
+
+        hotelDTO.setRooms(updatedRooms);
+        hotelService.saveHotel(hotelDTO);
+        return ResponseEntity.ok(hotelDTO);
     }
 
     @GetMapping("/available")

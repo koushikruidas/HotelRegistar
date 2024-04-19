@@ -8,10 +8,10 @@ import com.registar.hotel.userService.utility.UserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/users")
@@ -22,6 +22,8 @@ public class UserController {
 
     @Autowired
     private UserMapper userMapper;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @GetMapping
     public ResponseEntity<List<UserDTO>> getAllUsers() {
@@ -38,6 +40,7 @@ public class UserController {
 
     @PostMapping
     public ResponseEntity<UserDTO> createUser(@RequestBody CreateUserRequest createUserRequest) {
+        createUserRequest.setPassword(passwordEncoder.encode(createUserRequest.getPassword()));
         UserDTO createdUser = userService.createUser(createUserRequest);
         return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
     }

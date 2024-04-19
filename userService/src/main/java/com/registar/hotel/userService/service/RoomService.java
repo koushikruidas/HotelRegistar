@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface RoomService {
+    void save(Room room);
     Room createRoom(CreateRoomRequest roomRequest);
     Optional<RoomDTO> getRoomById(int id);
     List<RoomDTO> getAllRooms(int id);

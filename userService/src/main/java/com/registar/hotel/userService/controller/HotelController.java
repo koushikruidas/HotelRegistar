@@ -2,22 +2,25 @@ package com.registar.hotel.userService.controller;
 
 import com.registar.hotel.userService.entity.Hotel;
 import com.registar.hotel.userService.entity.Room;
+import com.registar.hotel.userService.entity.User;
 import com.registar.hotel.userService.model.CreateHotelRequest;
 import com.registar.hotel.userService.model.CreateRoomRequest;
 import com.registar.hotel.userService.model.HotelDTO;
 import com.registar.hotel.userService.model.RoomDTO;
 import com.registar.hotel.userService.service.HotelService;
 import com.registar.hotel.userService.service.RoomService;
+import com.registar.hotel.userService.service.UserService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -30,46 +33,29 @@ public class HotelController {
     private RoomService roomService;
     @Autowired
     private ModelMapper modelMapper;
+    @Autowired
+    private UserService userService;
 
-    @PostMapping("/add")
+    @PostMapping("/")
     public ResponseEntity<HotelDTO> createHotel(@RequestBody CreateHotelRequest hotelRequest) {
         HotelDTO createdHotel = hotelService.saveHotel(hotelRequest);
         return new ResponseEntity<>(createdHotel, HttpStatus.CREATED);
     }
 
-    @PostMapping("/addRooms")
-    public ResponseEntity<HotelDTO> addRooms(@RequestParam Long hotelId,
-                                             @RequestBody List<CreateRoomRequest> rooms){
-        Optional<HotelDTO> hotelOptional = hotelService.getHotelById(hotelId);
-        if (hotelOptional.isPresent()) {
-            HotelDTO hotelDTO = hotelOptional.get();
-
-            // changing the list to RoomDTO types
-            List<RoomDTO> roomsDto = rooms.stream()
-                    .map(room -> {
-                        Room createdRoom = roomService.createRoom(room);
-                        createdRoom.setHotel(modelMapper.map(hotelDTO, Hotel.class));
-                        return modelMapper.map(createdRoom, RoomDTO.class);
-                    }).toList();
-
-            hotelDTO.setRooms(roomsDto);
-            hotelService.saveHotel(hotelDTO);
-            return ResponseEntity.ok(hotelDTO);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-    @GetMapping("/getById/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<HotelDTO> getHotelById(@PathVariable("id") Long id) {
         Optional<HotelDTO> hotelOptional = hotelService.getHotelById(id);
         return hotelOptional.map(hotelDTO -> new ResponseEntity<>(hotelDTO, HttpStatus.OK))
                             .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
-    @GetMapping("/get/byOwner")
-    public ResponseEntity<List<HotelDTO>> getAllHotelsByUserId(@RequestParam("ownerId") Long ownerId) {
-        List<HotelDTO> hotels = hotelService.getAllHotelsByOwnerId(ownerId);
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @GetMapping("/byOwner")
+    public ResponseEntity<List<HotelDTO>> getAllHotelsByUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = ((UserDetails) authentication.getPrincipal()).getUsername();
+
+        List<HotelDTO> hotels = hotelService.getAllHotelsByOwner(username);
         if (hotels != null) {
             return new ResponseEntity<>(hotels, HttpStatus.OK);
         } else {
@@ -77,20 +63,36 @@ public class HotelController {
         }
     }
 
-    @GetMapping("/getAll")
+    @PreAuthorize("hasRole('ROLE_EMPLOYEE')")
+    @GetMapping("/employee/hotels")
+    public ResponseEntity<List<HotelDTO>> getHotelsForEmployee() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = ((UserDetails) authentication.getPrincipal()).getUsername();
+        Optional<User> user = userService.getUserByEmail(username);
+        if (user.isPresent()) {
+            Set<Hotel> hotels = user.get().getHotelsEmployedAt();
+            List<HotelDTO> hotelDTOs = hotels.stream()
+                    .map(hotel -> modelMapper.map(hotel,HotelDTO.class)) // Assuming a method to convert hotel entity to DTO
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(hotelDTOs);
+        }
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+    }
+
+    @GetMapping("/")
     public ResponseEntity<List<HotelDTO>> getAllHotels() {
         List<HotelDTO> allHotels = hotelService.getAllHotels();
         return new ResponseEntity<>(allHotels, HttpStatus.OK);
     }
 
-    @PutMapping("update/{hotelId}")
+    @PutMapping("/{hotelId}")
     public ResponseEntity<HotelDTO> updateHotel(@PathVariable Long hotelId, @RequestBody CreateHotelRequest hotelRequest) {
         Optional<HotelDTO> updatedHotel = hotelService.updateHotel(hotelId, hotelRequest);
         return updatedHotel.map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteHotel(@PathVariable("id") Long id) {
         hotelService.deleteHotel(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

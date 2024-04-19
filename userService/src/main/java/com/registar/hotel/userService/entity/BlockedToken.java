@@ -19,6 +19,7 @@ public class BlockedToken {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(length = 1024)
     private String token;
 
     private LocalDateTime blockedAt;

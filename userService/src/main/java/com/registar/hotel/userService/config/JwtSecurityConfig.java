@@ -52,7 +52,10 @@ public class JwtSecurityConfig {
                 .cors(cors -> cors.configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
                     config.setAllowCredentials(true);
-                    config.addAllowedOrigin("*"); // Allows all origin
+                    config.addAllowedOrigin("http://localhost:8083");// Allows the origin
+                    config.addAllowedOrigin("http://127.0.0.1:8083");
+                    config.addAllowedMethod(CorsConfiguration.ALL); // Allow all methods or specify like "GET", "POST", etc.
+                    config.addAllowedHeader(CorsConfiguration.ALL); // Allow all headers or specify as needed
                     return config;
                 }))
                 .csrf(AbstractHttpConfigurer::disable)

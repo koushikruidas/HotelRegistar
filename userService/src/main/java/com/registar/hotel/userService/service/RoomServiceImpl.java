@@ -50,6 +50,11 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
+    public void save(Room room) {
+        roomRepository.save(room);
+    }
+
+    @Override
     public Room createRoom(CreateRoomRequest roomRequest) {
         Room room = new Room();
         room.setRoomNumber(roomRequest.getRoomNumber());

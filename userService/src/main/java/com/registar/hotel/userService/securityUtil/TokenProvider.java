@@ -1,5 +1,6 @@
 package com.registar.hotel.userService.securityUtil;
 
+import com.registar.hotel.userService.entity.Role;
 import com.registar.hotel.userService.exception.UserLoggedOutException;
 import com.registar.hotel.userService.model.UserDTO;
 import com.registar.hotel.userService.service.BlockedTokenService;
@@ -38,13 +39,21 @@ public class TokenProvider {
     private RoleService roleService;
 
     public String generateToken(Authentication authentication) {
-
+        final Map<String, Object> claims = new HashMap<>();
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
 
+        Optional<UserDTO> userById = userService.getUserById(userPrincipal.getId());
+        if (userById.isEmpty()) {
+            throw new IllegalArgumentException("No user found with ID: " + userPrincipal.getId());
+        }
+        Set<Role> roles = userById.get().getRoles();
+        logger.info("User Roles: ",roles);
+        claims.put(ROLES,userById.get().getRoles());
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
 
         return Jwts.builder()
+                .setClaims(claims)
                 .setSubject(Long.toString(userPrincipal.getId()))
                 .setIssuedAt(new Date())
                 .setExpiration(expiryDate)
