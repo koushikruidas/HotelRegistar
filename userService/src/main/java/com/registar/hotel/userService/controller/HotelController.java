@@ -81,4 +81,40 @@ public class HotelController {
         hotelService.deleteHotel(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
+
+    // Endpoint to add an employee to a hotel
+    @PostMapping("/{hotelId}/employees/{userId}")
+    public ResponseEntity<?> addEmployeeToHotel(@PathVariable Long hotelId, @PathVariable Long userId) {
+        // Check if hotel exists
+        Optional<Hotel> hotelOptional = hotelService.findById(hotelId);
+        if (hotelOptional.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // Check if user exists
+        Optional<User> userOptional = userService.findById(userId);
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Hotel hotel = hotelOptional.get();
+        User user = userOptional.get();
+
+        // Add user as an employee to the hotel
+        hotel.getEmployees().add(user);
+        hotelService.save(hotel);
+
+        return ResponseEntity.ok().build();
+    }
+
+    // Endpoint to get all hotels for an employee
+    @PreAuthorize("hasRole('ROLE_EMPLOYEE')")
+    @GetMapping("/employees/hotels")
+    public ResponseEntity<List<HotelDTO>> getHotelsForEmployee() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = ( (UserDetails) authentication.getPrincipal()).getUsername();
+        List<HotelDTO> hotels = hotelService.getHotelsForEmployee(username);
+        return ResponseEntity.ok(hotels);
+    }
+
 }

@@ -10,6 +10,7 @@ import com.registar.hotel.userService.repository.UserRepository;
 import com.registar.hotel.userService.utility.UserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.logging.Logger;
@@ -32,6 +33,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public List<UserDTO> getAllUsers() {
         return userRepository.findAll().stream()
                 .map(userMapper::toDto)
@@ -39,23 +41,27 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public Optional<User> getUserByEmail(String email) {
         return userRepository.findByEmail(email);
     }
 
     @Override
+    @Transactional
     public Optional<UserDTO> getUserById(Long userId) {
         Optional<User> userOptional = userRepository.findById(userId);
         return userOptional.map(userMapper::toDto);
     }
 
     @Override
+    @Transactional
     public UserDTO createUser(CreateUserRequest userDTO) {
         User user = userRepository.save(userMapper.toEntity(userDTO));
         return userMapper.toDto(user);
     }
 
     @Override
+    @Transactional
     public Optional<UserDTO> updateUser(Long userId, UpdateUserRequest userDTO) {
         Optional<User> existingUser = userRepository.findById(userId);
         if (existingUser.isPresent()) {
@@ -97,13 +103,21 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public void deleteUser(Long userId) {
         userRepository.deleteById(userId);
     }
 
     @Override
+    @Transactional
     public void save(User user) {
         userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public Optional<User> findById(Long id){
+        return userRepository.findById(id);
     }
 }
 

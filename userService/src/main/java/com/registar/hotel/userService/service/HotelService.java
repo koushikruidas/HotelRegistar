@@ -1,5 +1,6 @@
 package com.registar.hotel.userService.service;
 
+import com.registar.hotel.userService.entity.Hotel;
 import com.registar.hotel.userService.model.CreateHotelRequest;
 import com.registar.hotel.userService.model.HotelDTO;
 
@@ -10,8 +11,11 @@ public interface HotelService {
     HotelDTO saveHotel(HotelDTO hotelDTO);
     HotelDTO saveHotel(CreateHotelRequest hotelRequest);
     Optional<HotelDTO> getHotelById(Long id);
+    Optional<Hotel> findById(Long id);
     List<HotelDTO> getAllHotelsByOwner(String username);
     List<HotelDTO> getAllHotels();
     void deleteHotel(Long id);
     Optional<HotelDTO> updateHotel(Long hotelId, CreateHotelRequest hotelRequest);
+    void save(Hotel hotel);
+    List<HotelDTO> getHotelsForEmployee(String username);
 }

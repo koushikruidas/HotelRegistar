@@ -3,6 +3,7 @@ package com.registar.hotel.userService.service;
 import com.registar.hotel.userService.entity.Hotel;
 import com.registar.hotel.userService.entity.Room;
 import com.registar.hotel.userService.entity.User;
+import com.registar.hotel.userService.exception.ResourceNotFoundException;
 import com.registar.hotel.userService.model.CreateHotelRequest;
 import com.registar.hotel.userService.model.CreateRoomRequest;
 import com.registar.hotel.userService.model.HotelDTO;
@@ -14,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -31,6 +33,7 @@ public class HotelServiceImpl implements HotelService {
 
     private static final Logger logger = LoggerFactory.getLogger(HotelServiceImpl.class);
     @Override
+    @Transactional
     public HotelDTO saveHotel(CreateHotelRequest hotelRequest) {
         // Implement conversion from DTO to entity and vice versa
         Optional<User> owner = userRepository.findByEmail(hotelRequest.getOwnerEmail());
@@ -45,18 +48,21 @@ public class HotelServiceImpl implements HotelService {
         }
     }
 
+    @Transactional
     public HotelDTO saveHotel(HotelDTO hotelDTO){
         Hotel hotel = hotelRepository.save(modelMapper.map(hotelDTO,Hotel.class));
         return modelMapper.map(hotel,HotelDTO.class);
     }
 
     @Override
+    @Transactional
     public Optional<HotelDTO> getHotelById(Long id) {
         Optional<Hotel> hotelOptional = hotelRepository.findById(id);
         return hotelOptional.map(i -> modelMapper.map(i, HotelDTO.class));
     }
 
     @Override
+    @Transactional
     public List<HotelDTO> getAllHotelsByOwner(String username) {
         Optional<User> user = userRepository.findByEmail(username);
         user.ifPresent(i -> {
@@ -72,6 +78,7 @@ public class HotelServiceImpl implements HotelService {
     }
 
     @Override
+    @Transactional
     public List<HotelDTO> getAllHotels() {
         List<Hotel> hotels = hotelRepository.findAll();
         return hotels.stream().map(i -> modelMapper.map(i, HotelDTO.class)).collect(Collectors.toList());
@@ -83,6 +90,7 @@ public class HotelServiceImpl implements HotelService {
     }
 
     @Override
+    @Transactional
     public Optional<HotelDTO> updateHotel(Long hotelId, CreateHotelRequest hotelRequest) {
         Optional<Hotel> optionalHotel = hotelRepository.findById(hotelId);
         if (optionalHotel.isPresent()) {
@@ -116,5 +124,36 @@ public class HotelServiceImpl implements HotelService {
             return Optional.of(modelMapper.map(updatedHotel, HotelDTO.class));
         }
         return Optional.empty();
+    }
+
+    @Override
+    @Transactional
+    public void save(Hotel hotel){
+        hotelRepository.save(hotel);
+    }
+
+    @Override
+    @Transactional
+    public Optional<Hotel> findById(Long id){
+        return hotelRepository.findById(id);
+    }
+
+    @Override
+    @Transactional
+    public List<HotelDTO> getHotelsForEmployee(String username) {
+        Optional<User> userOptional = userRepository.findByEmail(username);
+        if (userOptional.isEmpty()) {
+            throw new ResourceNotFoundException("User not found with id: " + username);
+        }
+
+        User user = userOptional.get();
+        List<Hotel> employedHotels = hotelRepository.findHotelsByEmployeeId(user.getId());
+
+        List<HotelDTO> hotelDTOs = new ArrayList<>();
+        for (Hotel hotel : employedHotels) {
+            hotelDTOs.add(modelMapper.map(hotel,HotelDTO.class));
+        }
+
+        return hotelDTOs;
     }
 }

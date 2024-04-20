@@ -14,7 +14,7 @@ import java.util.Set;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@ToString(exclude = {"hotels"})
+@ToString(exclude = {"hotels", "employedHotels"})
 @Entity
 public class User {
     @Id
@@ -39,6 +39,10 @@ public class User {
 
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL)
     private List<Hotel> hotels; // If owner
+
+    @ManyToMany(mappedBy = "employees", fetch = FetchType.LAZY)
+    private Set<Hotel> employedHotels; // Hotels where the user is employed
+
 
     private boolean isAccountExpired = false;
     private boolean isAccountLocked = false;

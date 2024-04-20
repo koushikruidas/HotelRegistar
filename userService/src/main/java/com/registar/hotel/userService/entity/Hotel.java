@@ -25,5 +25,12 @@ public class Hotel {
     private User owner;
     @OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL)
     private List<Room> rooms;
+
+    @ManyToMany
+    @JoinTable(
+            name = "employee_hotels",
+            joinColumns = @JoinColumn(name = "hotel_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id"))
+    private Set<User> employees; // Employees working at the hotel
 }
 
