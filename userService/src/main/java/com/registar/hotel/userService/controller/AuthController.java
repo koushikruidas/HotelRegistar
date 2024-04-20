@@ -79,8 +79,12 @@ public class AuthController {
 
         String token = tokenProvider.generateToken(authentication);
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(loginRequest.getEmail());
-
+        Optional<User> user = userRepository.findByEmail(loginRequest.getEmail());
+        if (user.isEmpty()) throw new ResourceNotFoundException("User not found in the database");
         AuthenticationResponse response = AuthenticationResponse.builder()
+                .firstName(user.get().getFirstName())
+                .lastName(user.get().getLastName())
+                .username(loginRequest.getEmail())
                 .accessToken(token)
                 .token(refreshToken.getToken())
                 .tokenType("Bearer")

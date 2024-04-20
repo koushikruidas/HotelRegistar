@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -49,25 +50,32 @@ public class HotelController {
                             .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
-    @GetMapping("/byOwner")
+    @GetMapping
     public ResponseEntity<List<HotelDTO>> getAllHotelsByUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Collection<? extends GrantedAuthority> authorities = ((UserDetails) (authentication.getPrincipal())).getAuthorities();
         String username = ((UserDetails) authentication.getPrincipal()).getUsername();
-
-        List<HotelDTO> hotels = hotelService.getAllHotelsByOwner(username);
-        if (hotels != null) {
+        List<HotelDTO> hotels = null;
+        if (authorities.stream().anyMatch(auth -> auth.getAuthority().equals("ROLE_OWNER"))) {
+            hotels = hotelService.getAllHotelsByOwner(username);
+        } else if (authorities.stream().anyMatch(auth -> auth.getAuthority().equals("ROLE_EMPLOYEE"))){
+            hotels = hotelService.getHotelsForEmployee(username);
+        }
+        if (hotels != null && !hotels.isEmpty()) {
             return new ResponseEntity<>(hotels, HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
 
+/*
+    This was for testing purpose to see all the hotels listed in our system.
+
     @GetMapping
     public ResponseEntity<List<HotelDTO>> getAllHotels() {
         List<HotelDTO> allHotels = hotelService.getAllHotels();
         return new ResponseEntity<>(allHotels, HttpStatus.OK);
-    }
+    }*/
 
     @PutMapping("/{hotelId}")
     public ResponseEntity<HotelDTO> updateHotel(@PathVariable Long hotelId, @RequestBody CreateHotelRequest hotelRequest) {
@@ -106,7 +114,7 @@ public class HotelController {
 
         return ResponseEntity.ok().build();
     }
-
+/*
     // Endpoint to get all hotels for an employee
     @PreAuthorize("hasRole('ROLE_EMPLOYEE')")
     @GetMapping("/employees/hotels")
@@ -115,6 +123,6 @@ public class HotelController {
         String username = ( (UserDetails) authentication.getPrincipal()).getUsername();
         List<HotelDTO> hotels = hotelService.getHotelsForEmployee(username);
         return ResponseEntity.ok(hotels);
-    }
+    }*/
 
 }

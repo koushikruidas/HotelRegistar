@@ -14,6 +14,9 @@ import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,7 +39,10 @@ public class HotelServiceImpl implements HotelService {
     @Transactional
     public HotelDTO saveHotel(CreateHotelRequest hotelRequest) {
         // Implement conversion from DTO to entity and vice versa
-        Optional<User> owner = userRepository.findByEmail(hotelRequest.getOwnerEmail());
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = ((UserDetails) authentication.getPrincipal()).getUsername();
+        Optional<User> owner = userRepository.findByEmail(username);
         HotelDTO hotelDTO = modelMapper.map(hotelRequest, HotelDTO.class);
         if (owner.isPresent()) {
             UserDTO ownerDto = modelMapper.map(owner.get(),UserDTO.class);
@@ -44,7 +50,7 @@ public class HotelServiceImpl implements HotelService {
             return modelMapper.map(hotelRepository.save(modelMapper.map(hotelDTO,Hotel.class)), HotelDTO.class);
         }
         else {
-            throw new RuntimeException("owner not present for mail id: "+hotelRequest.getOwnerEmail());
+            throw new RuntimeException("owner not present for mail id: "+username);
         }
     }
 
@@ -93,6 +99,9 @@ public class HotelServiceImpl implements HotelService {
     @Transactional
     public Optional<HotelDTO> updateHotel(Long hotelId, CreateHotelRequest hotelRequest) {
         Optional<Hotel> optionalHotel = hotelRepository.findById(hotelId);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = ((UserDetails) authentication.getPrincipal()).getUsername();
+
         if (optionalHotel.isPresent()) {
             Hotel hotel = optionalHotel.get();
             String newName = hotelRequest.getName();
@@ -106,16 +115,15 @@ public class HotelServiceImpl implements HotelService {
             }
 
             // Find owner by username from request
-            String ownerEmail = hotelRequest.getOwnerEmail();
-            if (!ownerEmail.isEmpty() && !ownerEmail.isBlank()) {
-                Optional<User> owner = userRepository.findByEmail(ownerEmail);
+            if (!username.isEmpty() && !username.isBlank()) {
+                Optional<User> owner = userRepository.findByEmail(username);
                 if (owner.isPresent()) {
                     hotel.setOwner(owner.get());
                 } else {
                     // Handle case where owner is not found
                     // You may throw an exception or return an error response
-                    logger.error("owner is not present: "+ownerEmail);
-                    throw new RuntimeException("owner not present for username: "+ownerEmail);
+                    logger.error("owner is not present: "+ username);
+                    throw new RuntimeException("owner not present for username: "+ username);
                 }
             }
             // Update other fields as needed

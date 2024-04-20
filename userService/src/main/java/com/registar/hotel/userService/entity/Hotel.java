@@ -20,6 +20,8 @@ public class Hotel {
     private Long id;
     private String name;
     private String address;
+    @Column(unique = true)
+    private String GSTNo;
     @ManyToOne
     @JoinColumn(name = "owner_id")
     private User owner;
