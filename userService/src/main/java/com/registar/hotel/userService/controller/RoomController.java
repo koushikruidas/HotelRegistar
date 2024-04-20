@@ -35,21 +35,21 @@ public class RoomController {
     private HotelService hotelService;
     @Autowired
     private ModelMapper modelMapper;
-    @GetMapping("/getRoomById/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<RoomDTO> getRoomById(@PathVariable("id") int id) {
         Optional<RoomDTO> roomOptional = roomService.getRoomById(id);
         return roomOptional.map(roomDTO -> new ResponseEntity<>(roomDTO, HttpStatus.OK))
                             .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
-    @GetMapping("/getAllRooms/byHotelId")
-    public ResponseEntity<List<RoomDTO>> getAllRooms(@RequestParam int id) {
-        List<RoomDTO> allRooms = roomService.getAllRooms(id);
+    @GetMapping("/{hotelId}")
+    public ResponseEntity<List<RoomDTO>> getAllRooms(@PathVariable("hotelId") Long hotelId) {
+        List<RoomDTO> allRooms = roomService.getAllRooms(hotelId);
         return new ResponseEntity<>(allRooms, HttpStatus.OK);
     }
 
-    @PostMapping("/")
-    public ResponseEntity<HotelDTO> addRooms(@RequestParam Long hotelId,
+    @PostMapping("/{hotelId}")
+    public ResponseEntity<HotelDTO> addRooms(@PathVariable("hotelId") Long hotelId,
                                              @RequestBody List<CreateRoomRequest> rooms){
         Optional<HotelDTO> hotelOptional = hotelService.getHotelById(hotelId);
         if (hotelOptional.isPresent()) {
@@ -71,8 +71,8 @@ public class RoomController {
         }
     }
 
-    @PutMapping("/rooms")
-    public ResponseEntity<HotelDTO> updateRooms(@RequestParam Long hotelId,
+    @PutMapping("/{hotelId}")
+    public ResponseEntity<HotelDTO> updateRooms(@PathVariable("hotelId") Long hotelId,
                                                 @RequestBody List<UpdateRoomRequest> rooms) {
         Optional<HotelDTO> hotelOptional = hotelService.getHotelById(hotelId);
         if (hotelOptional.isEmpty()) {
@@ -116,7 +116,7 @@ public class RoomController {
         return ResponseEntity.ok(availableRooms);
     }
 
-    @DeleteMapping("delete/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteRoom(@PathVariable("id") int id) {
         roomService.deleteRoom(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

@@ -12,7 +12,7 @@ public interface RoomService {
     void save(Room room);
     Room createRoom(CreateRoomRequest roomRequest);
     Optional<RoomDTO> getRoomById(int id);
-    List<RoomDTO> getAllRooms(int id);
+    List<RoomDTO> getAllRooms(Long id);
     List<RoomDTO> getAvailableRoomsForDateRange(LocalDate startDate, LocalDate endDate, List<Integer> hotelIds);
     void deleteRoom(int id);
 }

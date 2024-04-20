@@ -26,7 +26,7 @@ public class BookingController {
     @Autowired
     private ModelMapper modelMapper;
 
-    @PostMapping("/create/booking/withGuest")
+    @PostMapping
     public ResponseEntity<BookingDTO> createBookingWithGuests(@Valid @RequestPart BookingWithGuestsDTO bookingWithGuestsDTO,
                                                               @RequestParam("govtId") MultipartFile[] govtIds,
                                                               @RequestParam("picture") MultipartFile[] pictures) {

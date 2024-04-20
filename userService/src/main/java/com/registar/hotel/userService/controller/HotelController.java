@@ -36,7 +36,7 @@ public class HotelController {
     @Autowired
     private UserService userService;
 
-    @PostMapping("/")
+    @PostMapping
     public ResponseEntity<HotelDTO> createHotel(@RequestBody CreateHotelRequest hotelRequest) {
         HotelDTO createdHotel = hotelService.saveHotel(hotelRequest);
         return new ResponseEntity<>(createdHotel, HttpStatus.CREATED);
@@ -63,17 +63,7 @@ public class HotelController {
         }
     }
 
-    @PreAuthorize("hasRole('ROLE_EMPLOYEE')")
-    @GetMapping("/employee/hotels")
-    public ResponseEntity<List<HotelDTO>> getHotelsForEmployee() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = ((UserDetails) authentication.getPrincipal()).getUsername();
-        Optional<User> user = userService.getUserByEmail(username);
-
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-    }
-
-    @GetMapping("/")
+    @GetMapping
     public ResponseEntity<List<HotelDTO>> getAllHotels() {
         List<HotelDTO> allHotels = hotelService.getAllHotels();
         return new ResponseEntity<>(allHotels, HttpStatus.OK);

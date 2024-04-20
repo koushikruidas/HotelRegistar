@@ -31,7 +31,7 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
-    public List<RoomDTO> getAllRooms(int id) {
+    public List<RoomDTO> getAllRooms(Long id) {
         List<Room> rooms = roomRepository.findByHotelId(id);
         return rooms.stream()
                     .map(room -> modelMapper.map(room, RoomDTO.class))

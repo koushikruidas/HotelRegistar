@@ -12,7 +12,7 @@ import java.util.List;
 
 @Repository
 public interface RoomRepository extends JpaRepository<Room, Integer> {
-    List<Room> findByHotelId(int id);
+    List<Room> findByHotelId(Long id);
     @Query(value = "SELECT * FROM room r " +
             "WHERE r.hotel_id IN (:hotelIds) " +
             "AND NOT EXISTS (SELECT 1 FROM room_availability ra " +
