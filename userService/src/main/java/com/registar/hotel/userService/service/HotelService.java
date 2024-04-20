@@ -3,6 +3,7 @@ package com.registar.hotel.userService.service;
 import com.registar.hotel.userService.entity.Hotel;
 import com.registar.hotel.userService.model.CreateHotelRequest;
 import com.registar.hotel.userService.model.HotelDTO;
+import com.registar.hotel.userService.model.response.HotelResponse;
 
 import java.util.List;
 import java.util.Optional;
@@ -12,10 +13,10 @@ public interface HotelService {
     HotelDTO saveHotel(CreateHotelRequest hotelRequest);
     Optional<HotelDTO> getHotelById(Long id);
     Optional<Hotel> findById(Long id);
-    List<HotelDTO> getAllHotelsByOwner(String username);
+    List<HotelResponse> getAllHotelsByOwner(String username);
     List<HotelDTO> getAllHotels();
     void deleteHotel(Long id);
     Optional<HotelDTO> updateHotel(Long hotelId, CreateHotelRequest hotelRequest);
     void save(Hotel hotel);
-    List<HotelDTO> getHotelsForEmployee(String username);
+    List<HotelResponse> getHotelsForEmployee(String username);
 }

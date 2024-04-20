@@ -1,13 +1,12 @@
 package com.registar.hotel.userService.service;
 
 import com.registar.hotel.userService.entity.Hotel;
-import com.registar.hotel.userService.entity.Room;
 import com.registar.hotel.userService.entity.User;
 import com.registar.hotel.userService.exception.ResourceNotFoundException;
 import com.registar.hotel.userService.model.CreateHotelRequest;
-import com.registar.hotel.userService.model.CreateRoomRequest;
 import com.registar.hotel.userService.model.HotelDTO;
 import com.registar.hotel.userService.model.UserDTO;
+import com.registar.hotel.userService.model.response.HotelResponse;
 import com.registar.hotel.userService.repository.HotelRepository;
 import com.registar.hotel.userService.repository.UserRepository;
 import org.modelmapper.ModelMapper;
@@ -43,7 +42,10 @@ public class HotelServiceImpl implements HotelService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = ((UserDetails) authentication.getPrincipal()).getUsername();
         Optional<User> owner = userRepository.findByEmail(username);
+        List<User> employees = userRepository.findByIds(hotelRequest.getEmployeeIds());
+
         HotelDTO hotelDTO = modelMapper.map(hotelRequest, HotelDTO.class);
+        hotelDTO.setEmployees(employees);
         if (owner.isPresent()) {
             UserDTO ownerDto = modelMapper.map(owner.get(),UserDTO.class);
             hotelDTO.setOwner(ownerDto);
@@ -69,7 +71,7 @@ public class HotelServiceImpl implements HotelService {
 
     @Override
     @Transactional
-    public List<HotelDTO> getAllHotelsByOwner(String username) {
+    public List<HotelResponse> getAllHotelsByOwner(String username) {
         Optional<User> user = userRepository.findByEmail(username);
         user.ifPresent(i -> {
             hotelRepository.findByOwner(i);
@@ -77,7 +79,7 @@ public class HotelServiceImpl implements HotelService {
         if (user.isPresent()){
             List<Hotel> hotels = hotelRepository.findByOwner(user.get());
             return hotels.stream()
-                    .map(hotel -> modelMapper.map(hotel, HotelDTO.class))
+                    .map(hotel -> modelMapper.map(hotel, HotelResponse.class))
                     .collect(Collectors.toList());
         }
         return null;
@@ -101,17 +103,22 @@ public class HotelServiceImpl implements HotelService {
         Optional<Hotel> optionalHotel = hotelRepository.findById(hotelId);
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = ((UserDetails) authentication.getPrincipal()).getUsername();
+        List<User> employees = userRepository.findByIds(hotelRequest.getEmployeeIds());
 
         if (optionalHotel.isPresent()) {
             Hotel hotel = optionalHotel.get();
             String newName = hotelRequest.getName();
             String newAddress = hotelRequest.getAddress();
+            Set<User> empSet = new HashSet<>(employees);
 
             if (!newName.isEmpty() && !newName.isBlank()){
                 hotel.setName(newName);
             }
             if (!newAddress.isEmpty() && !newAddress.isBlank()){
                 hotel.setAddress(newAddress);
+            }
+            if (!employees.isEmpty()){
+                hotel.setEmployees(empSet);
             }
 
             // Find owner by username from request
@@ -148,7 +155,7 @@ public class HotelServiceImpl implements HotelService {
 
     @Override
     @Transactional
-    public List<HotelDTO> getHotelsForEmployee(String username) {
+    public List<HotelResponse> getHotelsForEmployee(String username) {
         Optional<User> userOptional = userRepository.findByEmail(username);
         if (userOptional.isEmpty()) {
             throw new ResourceNotFoundException("User not found with id: " + username);
@@ -157,11 +164,11 @@ public class HotelServiceImpl implements HotelService {
         User user = userOptional.get();
         List<Hotel> employedHotels = hotelRepository.findHotelsByEmployeeId(user.getId());
 
-        List<HotelDTO> hotelDTOs = new ArrayList<>();
+        List<HotelResponse> hotelResponses = new ArrayList<>();
         for (Hotel hotel : employedHotels) {
-            hotelDTOs.add(modelMapper.map(hotel,HotelDTO.class));
+            hotelResponses.add(modelMapper.map(hotel,HotelResponse.class));
         }
 
-        return hotelDTOs;
+        return hotelResponses;
     }
 }

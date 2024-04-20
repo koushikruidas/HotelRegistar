@@ -7,6 +7,7 @@ import com.registar.hotel.userService.model.CreateHotelRequest;
 import com.registar.hotel.userService.model.CreateRoomRequest;
 import com.registar.hotel.userService.model.HotelDTO;
 import com.registar.hotel.userService.model.RoomDTO;
+import com.registar.hotel.userService.model.response.HotelResponse;
 import com.registar.hotel.userService.service.HotelService;
 import com.registar.hotel.userService.service.RoomService;
 import com.registar.hotel.userService.service.UserService;
@@ -51,11 +52,11 @@ public class HotelController {
     }
 
     @GetMapping
-    public ResponseEntity<List<HotelDTO>> getAllHotelsByUserId() {
+    public ResponseEntity<List<HotelResponse>> getAllHotelsByUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Collection<? extends GrantedAuthority> authorities = ((UserDetails) (authentication.getPrincipal())).getAuthorities();
         String username = ((UserDetails) authentication.getPrincipal()).getUsername();
-        List<HotelDTO> hotels = null;
+        List<HotelResponse> hotels = null;
         if (authorities.stream().anyMatch(auth -> auth.getAuthority().equals("ROLE_OWNER"))) {
             hotels = hotelService.getAllHotelsByOwner(username);
         } else if (authorities.stream().anyMatch(auth -> auth.getAuthority().equals("ROLE_EMPLOYEE"))){
@@ -114,6 +115,36 @@ public class HotelController {
 
         return ResponseEntity.ok().build();
     }
+
+    @DeleteMapping("/{hotelId}/employees/{userId}")
+    public ResponseEntity<?> removeEmployeeFromHotel(@PathVariable Long hotelId, @PathVariable Long userId) {
+        // Check if hotel exists
+        Optional<Hotel> hotelOptional = hotelService.findById(hotelId);
+        if (hotelOptional.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // Check if user exists
+        Optional<User> userOptional = userService.findById(userId);
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Hotel hotel = hotelOptional.get();
+        User user = userOptional.get();
+
+        // Remove user from the list of employees of the hotel
+        if (!hotel.getEmployees().remove(user)) {
+            return ResponseEntity.notFound().build(); // User was not found in the list of employees
+        }
+
+        // Save the updated hotel
+        hotelService.save(hotel);
+
+        return ResponseEntity.ok().build();
+    }
+
+
 /*
     // Endpoint to get all hotels for an employee
     @PreAuthorize("hasRole('ROLE_EMPLOYEE')")
