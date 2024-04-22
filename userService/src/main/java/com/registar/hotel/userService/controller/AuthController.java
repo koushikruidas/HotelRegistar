@@ -88,6 +88,7 @@ public class AuthController {
                 .accessToken(token)
                 .token(refreshToken.getToken())
                 .tokenType("Bearer")
+                .roles(user.get().getRoles())
                 .build();
 
         return new ResponseEntity<>(response, HttpStatus.OK);
