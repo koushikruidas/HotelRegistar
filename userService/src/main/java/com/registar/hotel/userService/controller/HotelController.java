@@ -79,6 +79,7 @@ public class HotelController {
     }*/
 
     @PutMapping("/{hotelId}")
+    @PreAuthorize("hasRole('ROLE_OWNER')")
     public ResponseEntity<HotelDTO> updateHotel(@PathVariable Long hotelId, @RequestBody CreateHotelRequest hotelRequest) {
         Optional<HotelDTO> updatedHotel = hotelService.updateHotel(hotelId, hotelRequest);
         return updatedHotel.map(ResponseEntity::ok)

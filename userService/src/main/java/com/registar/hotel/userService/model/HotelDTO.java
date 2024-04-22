@@ -1,5 +1,6 @@
 package com.registar.hotel.userService.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.registar.hotel.userService.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -16,5 +17,5 @@ public class HotelDTO {
     private String address;
     private UserDTO owner;
     private List<RoomDTO> rooms;
-    private List<User> employees;
+    private List<UserDTO> employees;
 }

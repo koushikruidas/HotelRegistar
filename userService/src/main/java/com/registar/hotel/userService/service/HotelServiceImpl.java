@@ -44,12 +44,11 @@ public class HotelServiceImpl implements HotelService {
         Optional<User> owner = userRepository.findByEmail(username);
         List<User> employees = userRepository.findByIds(hotelRequest.getEmployeeIds());
 
-        HotelDTO hotelDTO = modelMapper.map(hotelRequest, HotelDTO.class);
-        hotelDTO.setEmployees(employees);
+        Hotel hotel = modelMapper.map(hotelRequest, Hotel.class);
+        hotel.setEmployees(new HashSet<>(employees));
         if (owner.isPresent()) {
-            UserDTO ownerDto = modelMapper.map(owner.get(),UserDTO.class);
-            hotelDTO.setOwner(ownerDto);
-            return modelMapper.map(hotelRepository.save(modelMapper.map(hotelDTO,Hotel.class)), HotelDTO.class);
+            hotel.setOwner(owner.get());
+            return modelMapper.map(hotelRepository.save(modelMapper.map(hotel,Hotel.class)), HotelDTO.class);
         }
         else {
             throw new RuntimeException("owner not present for mail id: "+username);
@@ -101,8 +100,6 @@ public class HotelServiceImpl implements HotelService {
     @Transactional
     public Optional<HotelDTO> updateHotel(Long hotelId, CreateHotelRequest hotelRequest) {
         Optional<Hotel> optionalHotel = hotelRepository.findById(hotelId);
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = ((UserDetails) authentication.getPrincipal()).getUsername();
         List<User> employees = userRepository.findByIds(hotelRequest.getEmployeeIds());
 
         if (optionalHotel.isPresent()) {
@@ -121,22 +118,9 @@ public class HotelServiceImpl implements HotelService {
                 hotel.setEmployees(empSet);
             }
 
-            // Find owner by username from request
-            if (!username.isEmpty() && !username.isBlank()) {
-                Optional<User> owner = userRepository.findByEmail(username);
-                if (owner.isPresent()) {
-                    hotel.setOwner(owner.get());
-                } else {
-                    // Handle case where owner is not found
-                    // You may throw an exception or return an error response
-                    logger.error("owner is not present: "+ username);
-                    throw new RuntimeException("owner not present for username: "+ username);
-                }
-            }
-            // Update other fields as needed
-
             Hotel updatedHotel = hotelRepository.save(hotel);
-            return Optional.of(modelMapper.map(updatedHotel, HotelDTO.class));
+            HotelDTO dto = modelMapper.map(updatedHotel, HotelDTO.class);
+            return Optional.of(dto);
         }
         return Optional.empty();
     }

@@ -9,6 +9,7 @@ import jakarta.persistence.*;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 @Data
@@ -48,4 +49,20 @@ public class User {
     private boolean isAccountLocked = false;
     private boolean isCredentialsExpired = false;
     private boolean isEnabled = true;
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(Id, email);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null || getClass() != obj.getClass())
+            return false;
+        User other = (User) obj;
+        return Objects.equals(Id, other.Id) &&
+                Objects.equals(email, other.email);
+    }
 }
