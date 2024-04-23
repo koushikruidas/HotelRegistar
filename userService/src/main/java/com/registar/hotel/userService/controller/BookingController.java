@@ -2,6 +2,7 @@ package com.registar.hotel.userService.controller;
 
 import com.registar.hotel.userService.model.BookingDTO;
 import com.registar.hotel.userService.model.BookingWithGuestsDTO;
+import com.registar.hotel.userService.model.response.BookingResponse;
 import com.registar.hotel.userService.service.BookingService;
 import com.registar.hotel.userService.service.GuestService;
 import jakarta.validation.Valid;
@@ -27,22 +28,22 @@ public class BookingController {
     private ModelMapper modelMapper;
 
     @PostMapping
-    public ResponseEntity<BookingDTO> createBookingWithGuests(@Valid @RequestPart BookingWithGuestsDTO bookingWithGuestsDTO,
+    public ResponseEntity<BookingResponse> createBookingWithGuests(@Valid @RequestPart BookingWithGuestsDTO bookingWithGuestsDTO,
                                                               @RequestParam("govtId") MultipartFile[] govtIds,
                                                               @RequestParam("picture") MultipartFile[] pictures) {
-        BookingDTO createdBooking = bookingService.saveBookingWithGuests(bookingWithGuestsDTO, govtIds, pictures);
+        BookingResponse createdBooking = bookingService.saveBookingWithGuests(bookingWithGuestsDTO, govtIds, pictures);
         return new ResponseEntity<>(createdBooking, HttpStatus.CREATED);
     }
     @GetMapping("/{id}")
-    public ResponseEntity<BookingDTO> getBookingById(@PathVariable("id") int id) {
-        Optional<BookingDTO> bookingOptional = bookingService.getBookingById(id);
-        return bookingOptional.map(bookingDTO -> new ResponseEntity<>(bookingDTO, HttpStatus.OK))
+    public ResponseEntity<BookingResponse> getBookingById(@PathVariable("id") int id) {
+        Optional<BookingResponse> bookingOptional = bookingService.getBookingById(id);
+        return bookingOptional.map(bookingResponse -> new ResponseEntity<>(bookingResponse, HttpStatus.OK))
                                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
     @GetMapping
-    public ResponseEntity<List<BookingDTO>> getAllBookings() {
-        List<BookingDTO> allBookings = bookingService.getAllBookings();
+    public ResponseEntity<List<BookingResponse>> getAllBookings() {
+        List<BookingResponse> allBookings = bookingService.getAllBookings();
         return new ResponseEntity<>(allBookings, HttpStatus.OK);
     }
 

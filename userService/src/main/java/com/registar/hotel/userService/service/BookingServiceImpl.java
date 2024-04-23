@@ -1,14 +1,13 @@
 package com.registar.hotel.userService.service;
 
-import com.registar.hotel.userService.entity.Booking;
-import com.registar.hotel.userService.entity.BookingStatus;
-import com.registar.hotel.userService.entity.Guest;
-import com.registar.hotel.userService.entity.Room;
+import com.registar.hotel.userService.entity.*;
+import com.registar.hotel.userService.exception.ResourceNotFoundException;
 import com.registar.hotel.userService.exception.RoomNotAvailableException;
 import com.registar.hotel.userService.model.BookingDTO;
 import com.registar.hotel.userService.model.BookingWithGuestsDTO;
 import com.registar.hotel.userService.model.GuestDTO;
 import com.registar.hotel.userService.model.RoomDTO;
+import com.registar.hotel.userService.model.response.BookingResponse;
 import com.registar.hotel.userService.repository.BookingRepository;
 import com.registar.hotel.userService.repository.GuestRepository;
 import com.registar.hotel.userService.repository.RoomRepository;
@@ -117,7 +116,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional
-    public BookingDTO saveBookingWithGuests(BookingWithGuestsDTO bookingWithGuestsDTO,
+    public BookingResponse saveBookingWithGuests(BookingWithGuestsDTO bookingWithGuestsDTO,
                                             MultipartFile[] govtIds, MultipartFile[] pictures) {
         BookingDTO bookingDTO = bookingWithGuestsDTO.getBooking();
         List<GuestDTO> guestDTOs = bookingWithGuestsDTO.getGuests();
@@ -161,16 +160,37 @@ public class BookingServiceImpl implements BookingService {
 
         // Check room availability in a batch operation
         List<Room> availableRooms = findAvailableRooms(bookingWithGuestsDTO.getBooking());
-        if (availableRooms.isEmpty()) throw new RoomNotAvailableException("Rooms are not available for the date range.");
+        if (availableRooms.size() != bookingWithGuestsDTO.getBooking().getBookedRooms().size()) {
+            throw new RoomNotAvailableException("All selected Rooms are not available for the date range. Only "
+                    + availableRooms.size() + " rooms are available.");
+        }
 
         // Calculate total price
         double totalPrice = calculateTotalPrice(availableRooms, bookingDTO.getRoomPrice(), checkInDate, checkOutDate);
 
         // Create and save booking
         Booking booking = createBooking(bookingDTO, guests1, availableRooms, totalPrice);
+
+        // Create and save room price entities
+        List<RoomPrice> roomPrices = new ArrayList<>();
+        for (RoomDTO roomDTO : bookingDTO.getBookedRooms()) {
+            Room room = roomRepository.findById(roomDTO.getId()).orElseThrow(() -> new RuntimeException("Room not found"));
+            RoomPrice roomPrice = new RoomPrice();
+            roomPrice.setRoom(room);
+            if (bookingDTO.getRoomPrice().containsKey(roomDTO.getId())){
+                roomPrice.setPrice(bookingDTO.getRoomPrice().get(roomDTO.getId()));
+            } else {
+                roomPrice.setPrice(roomDTO.getPricePerNight()); // Set the price from the DTO
+            }
+            roomPrice.setBooking(booking);
+            roomPrices.add(roomPrice);
+        }
+        // Set room prices to the booking entity
+        booking.setRoomPrices(roomPrices);
+
         Booking savedBooking = bookingRepository.save(booking);
         updateRoomAvailabilityForBooking(savedBooking);
-        return modelMapper.map(savedBooking, BookingDTO.class);
+        return modelMapper.map(savedBooking, BookingResponse.class);
     }
 
     // Helper method to upload file asynchronously
@@ -280,20 +300,25 @@ public class BookingServiceImpl implements BookingService {
 
 
     @Override
-    public Optional<BookingDTO> getBookingById(int id) {
+    @Transactional
+    public Optional<BookingResponse> getBookingById(int id) {
         Optional<Booking> bookingOptional = bookingRepository.findById(id);
-        return bookingOptional.map(booking -> modelMapper.map(booking, BookingDTO.class));
+        if (bookingOptional.isEmpty()) throw new ResourceNotFoundException("Not Found!!");
+        BookingResponse map = modelMapper.map(bookingOptional.get(), BookingResponse.class);
+        return bookingOptional.map(booking -> modelMapper.map(booking, BookingResponse.class));
     }
 
     @Override
-    public List<BookingDTO> getAllBookings() {
+    @Transactional
+    public List<BookingResponse> getAllBookings() {
         List<Booking> bookings = bookingRepository.findAll();
         return bookings.stream()
-                .map(booking -> modelMapper.map(booking, BookingDTO.class))
+                .map(booking -> modelMapper.map(booking, BookingResponse.class))
                 .collect(Collectors.toList());
     }
 
     @Override
+    @Transactional
     public void deleteBooking(int id) {
         bookingRepository.deleteById(id);
     }

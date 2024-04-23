@@ -11,7 +11,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@ToString
+@ToString(exclude = {"bookings"})
 @Entity
 @Table(uniqueConstraints = {@UniqueConstraint(columnNames = {"name", "mobileNo"})})
 public class Guest {

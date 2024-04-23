@@ -7,12 +7,13 @@ import lombok.ToString;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@ToString
+@ToString(exclude = {"roomPrices"})
 @Entity
 public class Booking {
     @Id
@@ -23,6 +24,9 @@ public class Booking {
     private LocalDate checkOutDate;
     private double totalPrice;
     private BookingStatus status;
+
+    @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL)
+    private List<RoomPrice> roomPrices = new ArrayList<>();
 
     @ManyToMany
     @JoinTable(

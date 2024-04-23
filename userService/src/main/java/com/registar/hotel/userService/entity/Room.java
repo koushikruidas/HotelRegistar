@@ -12,7 +12,7 @@ import java.util.*;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@ToString
+@ToString(exclude = {"bookings"})
 @Entity
 public class Room {
     @Id
