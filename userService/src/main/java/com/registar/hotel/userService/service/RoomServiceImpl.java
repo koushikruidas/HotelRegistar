@@ -25,7 +25,7 @@ public class RoomServiceImpl implements RoomService {
     private ModelMapper modelMapper;
 
     @Override
-    public Optional<RoomDTO> getRoomById(int id) {
+    public Optional<RoomDTO> getRoomById(Long id) {
         Optional<Room> roomOptional = roomRepository.findById(id);
         return roomOptional.map(room -> modelMapper.map(room, RoomDTO.class));
     }
@@ -39,13 +39,13 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
-    public List<RoomDTO> getAvailableRoomsForDateRange(LocalDate startDate, LocalDate endDate, List<Integer> hotelIds) {
+    public List<RoomDTO> getAvailableRoomsForDateRange(LocalDate startDate, LocalDate endDate, List<Long> hotelIds) {
         List<Room> availableRooms = roomRepository.findAvailableRoomsForDateRange(startDate, endDate, hotelIds);
         return availableRooms.stream().map(room -> modelMapper.map(room,RoomDTO.class)).collect(Collectors.toList());
     }
 
     @Override
-    public void deleteRoom(int id) {
+    public void deleteRoom(Long id) {
         roomRepository.deleteById(id);
     }
 

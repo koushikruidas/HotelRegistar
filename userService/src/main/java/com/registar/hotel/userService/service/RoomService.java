@@ -11,8 +11,8 @@ import java.util.Optional;
 public interface RoomService {
     void save(Room room);
     Room createRoom(CreateRoomRequest roomRequest);
-    Optional<RoomDTO> getRoomById(int id);
+    Optional<RoomDTO> getRoomById(Long id);
     List<RoomDTO> getAllRooms(Long id);
-    List<RoomDTO> getAvailableRoomsForDateRange(LocalDate startDate, LocalDate endDate, List<Integer> hotelIds);
-    void deleteRoom(int id);
+    List<RoomDTO> getAvailableRoomsForDateRange(LocalDate startDate, LocalDate endDate, List<Long> hotelIds);
+    void deleteRoom(Long id);
 }

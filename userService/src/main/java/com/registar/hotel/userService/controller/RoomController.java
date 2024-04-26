@@ -36,13 +36,13 @@ public class RoomController {
     @Autowired
     private ModelMapper modelMapper;
     @GetMapping("/{id}")
-    public ResponseEntity<RoomDTO> getRoomById(@PathVariable("id") int id) {
+    public ResponseEntity<RoomDTO> getRoomById(@PathVariable("id") Long id) {
         Optional<RoomDTO> roomOptional = roomService.getRoomById(id);
         return roomOptional.map(roomDTO -> new ResponseEntity<>(roomDTO, HttpStatus.OK))
                             .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
-    @GetMapping("/{hotelId}")
+    @GetMapping("/hotel/{hotelId}")
     public ResponseEntity<List<RoomDTO>> getAllRooms(@PathVariable("hotelId") Long hotelId) {
         List<RoomDTO> allRooms = roomService.getAllRooms(hotelId);
         return new ResponseEntity<>(allRooms, HttpStatus.OK);
@@ -110,14 +110,14 @@ public class RoomController {
             @RequestParam(name = "endDate") @DateTimeFormat(pattern = "dd-MM-yyyy") LocalDate endDate,
 
             @Parameter(in = ParameterIn.QUERY, description = "List of hotel IDs", required = true)
-            @RequestParam(name = "hotelIds") List<Integer> hotelIds) {
+            @RequestParam(name = "hotelIds") List<Long> hotelIds) {
 
         List<RoomDTO> availableRooms = roomService.getAvailableRoomsForDateRange(startDate, endDate, hotelIds);
         return ResponseEntity.ok(availableRooms);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteRoom(@PathVariable("id") int id) {
+    public ResponseEntity<Void> deleteRoom(@PathVariable("id") Long id) {
         roomService.deleteRoom(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }

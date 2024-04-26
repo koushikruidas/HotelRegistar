@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 public class UpdateRoomRequest {
-    private int Id;
+    private Long Id;
     private int roomNumber;
     private RoomType type;
     private String customType;

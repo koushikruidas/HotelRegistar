@@ -12,11 +12,11 @@ import java.util.Map;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RoomDTO {
-    private int id;
+    private Long Id;
     private int roomNumber;
     private RoomType type;
     private String customType;
     private double pricePerNight;
     private Map<LocalDate, Boolean> bookingMap;
-    private int hotelId;
+    private Long hotelId;
 }

@@ -11,7 +11,7 @@ import java.util.Date;
 import java.util.List;
 
 @Repository
-public interface RoomRepository extends JpaRepository<Room, Integer> {
+public interface RoomRepository extends JpaRepository<Room, Long> {
     List<Room> findByHotelId(Long id);
     @Query(value = "SELECT * FROM room r " +
             "WHERE r.hotel_id IN (:hotelIds) " +
@@ -19,7 +19,7 @@ public interface RoomRepository extends JpaRepository<Room, Integer> {
             "                WHERE ra.room_id = r.id " +
             "                AND ra.booking_map_key BETWEEN :startDate AND :endDate " +
             "                AND ra.is_booked = true)", nativeQuery = true)
-    List<Room> findAvailableRoomsForDateRange(LocalDate startDate, LocalDate endDate, List<Integer> hotelIds);
+    List<Room> findAvailableRoomsForDateRange(LocalDate startDate, LocalDate endDate, List<Long> hotelIds);
 
     @Query(value = "SELECT * FROM room r " +
             "WHERE r.id IN (:roomIds) " +
@@ -27,5 +27,5 @@ public interface RoomRepository extends JpaRepository<Room, Integer> {
             "                WHERE ra.room_id = r.id " +
             "                AND ra.booking_map_key BETWEEN :startDate AND :endDate " +
             "                AND ra.is_booked = true)", nativeQuery = true)
-    List<Room> findAvailableRoomsForDateRangeByRoomIds(LocalDate startDate, LocalDate endDate, List<Integer> roomIds);
+    List<Room> findAvailableRoomsForDateRangeByRoomIds(LocalDate startDate, LocalDate endDate, List<Long> roomIds);
 }

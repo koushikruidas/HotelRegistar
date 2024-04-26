@@ -53,7 +53,7 @@ public class JwtSecurityConfig {
                     CorsConfiguration config = new CorsConfiguration();
                     config.setAllowCredentials(true);
                     config.addAllowedOrigin("http://localhost:8083");// Allows the origin
-                    config.addAllowedOrigin("http://127.0.0.1:8083");
+                    config.addAllowedOrigin("https://hotel-admin-pro.netlify.app/");
                     config.addAllowedMethod(CorsConfiguration.ALL); // Allow all methods or specify like "GET", "POST", etc.
                     config.addAllowedHeader(CorsConfiguration.ALL); // Allow all headers or specify as needed
                     return config;

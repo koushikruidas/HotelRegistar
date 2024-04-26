@@ -8,6 +8,6 @@ import java.util.List;
 public class CreateHotelRequest {
     private String name;
     private String address;
-    private String GSTNo;
+    private String gstNumber;
     private List<Long> employeeIds;
 }

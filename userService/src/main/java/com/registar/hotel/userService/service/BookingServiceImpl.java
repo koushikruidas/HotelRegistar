@@ -208,7 +208,7 @@ public class BookingServiceImpl implements BookingService {
     private List<Room> findAvailableRooms(BookingDTO bookingDTO) {
         LocalDate checkInDate = bookingDTO.getCheckInDate();
         LocalDate checkOutDate = bookingDTO.getCheckOutDate();
-        List<Integer> roomIds = bookingDTO.getBookedRooms().stream().map(RoomDTO::getId).collect(Collectors.toList());
+        List<Long> roomIds = bookingDTO.getBookedRooms().stream().map(RoomDTO::getId).collect(Collectors.toList());
 
         // Fetch availability for all rooms within the date range
         List<Room> availableRooms = roomRepository.findAvailableRoomsForDateRangeByRoomIds(checkInDate, checkOutDate, roomIds);

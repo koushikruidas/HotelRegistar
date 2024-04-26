@@ -17,7 +17,7 @@ import java.util.*;
 public class Room {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int Id;
+    private Long Id;
     private int roomNumber;
     @Enumerated(EnumType.STRING)
     @Column(length = 255)

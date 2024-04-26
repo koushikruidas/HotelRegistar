@@ -22,7 +22,7 @@ public class Hotel {
     private String name;
     private String address;
     @Column(unique = true)
-    private String GSTNo;
+    private String gstNumber;
     @ManyToOne
     @JoinColumn(name = "owner_id")
     private User owner;
