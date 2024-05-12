@@ -31,34 +31,6 @@ public class Room {
     @ManyToMany(mappedBy = "bookedRooms", cascade = CascadeType.ALL)
     private List<Booking> bookings;
 
-    @Transient
-    private boolean isAvailableToday = isAvailableForToday();
-
-    public boolean isAvailableForDateRange(LocalDate startDate, LocalDate endDate) {
-        // Iterate over bookings for this room
-        for (Booking booking : bookings) {
-            // Check if the booking overlaps with the given date range
-            if (booking.getCheckInDate().isBefore(endDate) && booking.getCheckOutDate().isAfter(startDate)) {
-                // Room is not available for this date range
-                return false;
-            }
-        }
-        return true; // Room is available for the entire date range
-    }
-
-    public boolean isAvailableForToday() {
-        LocalDate today = LocalDate.now();
-        if (bookings == null) return true;
-        // Check if there's any booking that overlaps with today's date
-        for (Booking booking : bookings) {
-            if (booking.getCheckInDate().isBefore(today) && booking.getCheckOutDate().isAfter(today)) {
-                // Room is not available for today
-                return false;
-            }
-        }
-        return true; // Room is available for today
-    }
-
     public List<LocalDate> getUnavailableDaysForMonth(int year, int month) {
         List<LocalDate> unavailableDays = new ArrayList<>();
 
