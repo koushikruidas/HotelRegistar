@@ -22,6 +22,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -143,6 +144,19 @@ public class HotelController {
         hotelService.save(hotel);
 
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{hotelId}/availability")
+    public ResponseEntity<Map<Room, List<LocalDate>>> getAvailabilityForMonth(
+            @PathVariable Long hotelId,
+            @RequestParam int year,
+            @RequestParam int month
+    ) {
+        Map<Room, List<LocalDate>> availabilityMap = hotelService.getAvailabilityMapForMonth(hotelId, year, month);
+        if (availabilityMap == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(availabilityMap, HttpStatus.OK);
     }
 
 

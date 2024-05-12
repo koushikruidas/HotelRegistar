@@ -43,77 +43,6 @@ public class BookingServiceImpl implements BookingService {
     @PersistenceContext
     private EntityManager entityManager;
 
-   /* @Override
-    public BookingDTO saveBookingWithGuests(BookingWithGuestsDTO bookingWithGuestsDTO) {
-        BookingDTO bookingDTO = bookingWithGuestsDTO.getBooking();
-        List<GuestDTO> guestDTOs = bookingWithGuestsDTO.getGuests();
-
-
-        LocalDate checkInDate = bookingDTO.getCheckInDate();
-        LocalDate checkOutDate = bookingDTO.getCheckOutDate();
-
-        List<Guest> guests = guestDTOs.stream()
-                .map(guestDTO -> {
-                    Optional<Guest> existingGuestOptional = guestRepository
-                            .findByNameAndMobileNo(guestDTO.getName(),guestDTO.getMobileNo());
-                    return existingGuestOptional
-                            .map(existingGuest ->{
-                                if (guestDTO.getGovtIDFilePath() != null) {
-                                    existingGuest.setGovtIDFilePath(guestDTO.getGovtIDFilePath());
-                                }
-                                if (guestDTO.getPictureFilePath() != null) {
-                                    existingGuest.setPictureFilePath(guestDTO.getPictureFilePath());
-                                }
-                                return existingGuest;
-                            })
-                            .orElseGet(() -> modelMapper.map(guestDTO, Guest.class));
-                })
-                .collect(Collectors.toList());
-
-        guestRepository.saveAll(guests);
-
-        Booking booking = modelMapper.map(bookingDTO, Booking.class);
-        booking.setGuests(guests);
-
-        List<Room> rooms = bookingDTO.getBookedRoomIds().stream()
-                .map(roomRepository::findById)
-                .flatMap(Optional::stream)
-                .filter(room -> {
-                    // Get the availability map for the room
-                    Map<LocalDate, Boolean> availabilityMap = room.getBookingMap();
-
-                    // Check availability for each date in the range
-                    for (LocalDate date = checkInDate; !date.isAfter(checkOutDate); date = date.plusDays(1)) {
-                        if (availabilityMap.getOrDefault(date, false)) {
-                            // Room is not available for this date, so filter it out
-                            throw new RoomNotAvailableException("Room: "+room.getRoomNumber()+" is not available for the date: "+date);
-                        }
-                    }
-                    return true; // Room is available for the entire date range
-                })
-                .collect(Collectors.toList());
-        booking.setBookedRooms(rooms);
-
-        double totalPricePerNight = rooms.stream()
-                .peek(room -> {
-                    if (bookingDTO.getRoomPrice().containsKey(room.getId())) {
-                        room.setPricePerNight(bookingDTO.getRoomPrice().get(room.getId()));
-                    }
-                })
-                .mapToDouble(Room::getPricePerNight)
-                .sum();
-
-        long daysBetween = ChronoUnit.DAYS.between(bookingDTO.getCheckInDate(), bookingDTO.getCheckOutDate());
-        double totalPrice = totalPricePerNight * Math.max(daysBetween, 1); // Ensure at least 1 day is charged
-        booking.setTotalPrice(totalPrice);
-
-        Booking savedBooking = bookingRepository.save(booking);
-        completeBooking(savedBooking.getId());
-
-        return modelMapper.map(savedBooking, BookingDTO.class);
-    }
-*/
-
     @Override
     @Transactional
     public BookingResponse saveBookingWithGuests(BookingWithGuestsDTO bookingWithGuestsDTO,
@@ -189,7 +118,7 @@ public class BookingServiceImpl implements BookingService {
         booking.setRoomPrices(roomPrices);
 
         Booking savedBooking = bookingRepository.save(booking);
-        updateRoomAvailabilityForBooking(savedBooking);
+//        updateRoomAvailabilityForBooking(savedBooking);
         return modelMapper.map(savedBooking, BookingResponse.class);
     }
 
@@ -211,12 +140,7 @@ public class BookingServiceImpl implements BookingService {
         List<Long> roomIds = bookingDTO.getBookedRooms().stream().map(RoomDTO::getId).collect(Collectors.toList());
 
         // Fetch availability for all rooms within the date range
-        List<Room> availableRooms = roomRepository.findAvailableRoomsForDateRangeByRoomIds(checkInDate, checkOutDate, roomIds);
-
-        // Filter out rooms that are not available for the entire date range
-        return availableRooms.stream()
-                .filter(room -> room.isAvailableForDateRange(checkInDate, checkOutDate))
-                .collect(Collectors.toList());
+        return roomRepository.findAvailableRoomsForDateRangeByRoomIds(checkInDate, checkOutDate, roomIds);
     }
 
     @Transactional
@@ -272,7 +196,7 @@ public class BookingServiceImpl implements BookingService {
         return booking;
     }
 
-    private double calculateTotalPrice(List<Room> rooms, Map<Integer, Double> roomPrices, LocalDate checkInDate, LocalDate checkOutDate) {
+    private double calculateTotalPrice(List<Room> rooms, Map<Long, Double> roomPrices, LocalDate checkInDate, LocalDate checkOutDate) {
         long daysBetween = ChronoUnit.DAYS.between(checkInDate, checkOutDate);
         return rooms.stream()
                 .mapToDouble(room -> {
@@ -282,21 +206,21 @@ public class BookingServiceImpl implements BookingService {
                 .sum();
     }
 
-    @Transactional
-    private void updateRoomAvailabilityForBooking(Booking booking) {
-        List<Room> bookedRooms = booking.getBookedRooms();
-        LocalDate checkInDate = booking.getCheckInDate();
-        LocalDate checkOutDate = booking.getCheckOutDate();
-
-        List<Room> managedRooms = new ArrayList<>();
-        for (Room room : bookedRooms){
-            // Update room availability for the booked date range
-            room.setAvailabilityForDateRange(checkInDate, checkOutDate, true);
-            managedRooms.add(entityManager.merge(room)); // Reattach the room
-        }
-        // Save all the updated rooms in a single batch operation
-        roomRepository.saveAll(managedRooms);
-    }
+//    @Transactional
+//    private void updateRoomAvailabilityForBooking(Booking booking) {
+//        List<Room> bookedRooms = booking.getBookedRooms();
+//        LocalDate checkInDate = booking.getCheckInDate();
+//        LocalDate checkOutDate = booking.getCheckOutDate();
+//
+//        List<Room> managedRooms = new ArrayList<>();
+//        for (Room room : bookedRooms){
+//            // Update room availability for the booked date range
+//            room.setAvailabilityForDateRange(checkInDate, checkOutDate, true);
+//            managedRooms.add(entityManager.merge(room)); // Reattach the room
+//        }
+//        // Save all the updated rooms in a single batch operation
+//        roomRepository.saveAll(managedRooms);
+//    }
 
 
     @Override
@@ -304,7 +228,6 @@ public class BookingServiceImpl implements BookingService {
     public Optional<BookingResponse> getBookingById(int id) {
         Optional<Booking> bookingOptional = bookingRepository.findById(id);
         if (bookingOptional.isEmpty()) throw new ResourceNotFoundException("Not Found!!");
-        BookingResponse map = modelMapper.map(bookingOptional.get(), BookingResponse.class);
         return bookingOptional.map(booking -> modelMapper.map(booking, BookingResponse.class));
     }
 

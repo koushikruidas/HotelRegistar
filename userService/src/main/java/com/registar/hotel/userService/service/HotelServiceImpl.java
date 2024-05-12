@@ -1,6 +1,7 @@
 package com.registar.hotel.userService.service;
 
 import com.registar.hotel.userService.entity.Hotel;
+import com.registar.hotel.userService.entity.Room;
 import com.registar.hotel.userService.entity.User;
 import com.registar.hotel.userService.exception.ResourceNotFoundException;
 import com.registar.hotel.userService.model.CreateHotelRequest;
@@ -19,6 +20,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -154,5 +156,23 @@ public class HotelServiceImpl implements HotelService {
         }
 
         return hotelResponses;
+    }
+
+    @Transactional
+    public Map<Room, List<LocalDate>> getAvailabilityMapForMonth(Long hotelId, int year, int month) {
+        Optional<Hotel> optionalHotel = hotelRepository.findById(hotelId);
+        if (optionalHotel.isEmpty()) {
+            // Handle hotel not found
+            return null;
+        }
+
+        Hotel hotel = optionalHotel.get();
+        Map<Room, List<LocalDate>> availabilityMap = new HashMap<>();
+        for (Room room : hotel.getRooms()) {
+            List<LocalDate> unavailableDays = room.getUnavailableDaysForMonth(year, month);
+            availabilityMap.put(room, unavailableDays);
+        }
+
+        return availabilityMap;
     }
 }

@@ -21,5 +21,5 @@ public class BookingDTO {
     @NotEmpty(message = "Booked rooms list cannot be empty")
     private List<RoomDTO> bookedRooms;
 
-    private Map<Integer,Double> roomPrice;
+    private Map<Long,Double> roomPrice;
 }

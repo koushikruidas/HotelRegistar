@@ -1,6 +1,5 @@
 package com.registar.hotel.userService.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -32,27 +31,15 @@ public class Room {
     @ManyToMany(mappedBy = "bookedRooms", cascade = CascadeType.ALL)
     private List<Booking> bookings;
 
-    @ElementCollection
-    @CollectionTable(name = "room_availability", joinColumns = @JoinColumn(name = "room_id"))
-    @MapKeyTemporal(TemporalType.DATE)
-    @Column(name = "isBooked")
-    private Map<LocalDate, Boolean> bookingMap = new HashMap<>();
-
     @Transient
-    private boolean isAvaiableToday = isAvaiableToday();
-
-    public void setAvailabilityForDateRange(LocalDate startDate, LocalDate endDate, boolean isBooked) {
-        LocalDate currentDate = startDate;
-        while (!currentDate.isAfter(endDate)) {
-            bookingMap.put(currentDate, isBooked);
-            currentDate = currentDate.plusDays(1); // Increment by one day
-        }
-    }
+    private boolean isAvailableToday = isAvailableForToday();
 
     public boolean isAvailableForDateRange(LocalDate startDate, LocalDate endDate) {
-        for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
-            if (bookingMap.containsKey(date) && bookingMap.get(date)) {
-                // Room is not available for this date
+        // Iterate over bookings for this room
+        for (Booking booking : bookings) {
+            // Check if the booking overlaps with the given date range
+            if (booking.getCheckInDate().isBefore(endDate) && booking.getCheckOutDate().isAfter(startDate)) {
+                // Room is not available for this date range
                 return false;
             }
         }
@@ -61,7 +48,31 @@ public class Room {
 
     public boolean isAvailableForToday() {
         LocalDate today = LocalDate.now();
-        return !bookingMap.containsKey(today); // Room is available for the entire date range
+        if (bookings == null) return true;
+        // Check if there's any booking that overlaps with today's date
+        for (Booking booking : bookings) {
+            if (booking.getCheckInDate().isBefore(today) && booking.getCheckOutDate().isAfter(today)) {
+                // Room is not available for today
+                return false;
+            }
+        }
+        return true; // Room is available for today
+    }
+
+    public List<LocalDate> getUnavailableDaysForMonth(int year, int month) {
+        List<LocalDate> unavailableDays = new ArrayList<>();
+
+        // Iterate over each booking in the room
+        for (Booking booking : bookings) {
+            // Check if the booking overlaps with any day in the specified month
+            for (LocalDate date = LocalDate.of(year, month, 1); date.getMonthValue() == month; date = date.plusDays(1)) {
+                if (booking.getCheckInDate().isBefore(date.plusDays(1)) && booking.getCheckOutDate().isAfter(date.minusDays(1))) {
+                    unavailableDays.add(date);
+                }
+            }
+        }
+
+        return unavailableDays;
     }
 }
 
