@@ -1,5 +1,6 @@
 package com.registar.hotel.userService.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -37,6 +38,9 @@ public class Room {
     @Column(name = "isBooked")
     private Map<LocalDate, Boolean> bookingMap = new HashMap<>();
 
+    @Transient
+    private boolean isAvaiableToday = isAvaiableToday();
+
     public void setAvailabilityForDateRange(LocalDate startDate, LocalDate endDate, boolean isBooked) {
         LocalDate currentDate = startDate;
         while (!currentDate.isAfter(endDate)) {
@@ -53,6 +57,11 @@ public class Room {
             }
         }
         return true; // Room is available for the entire date range
+    }
+
+    public boolean isAvailableForToday() {
+        LocalDate today = LocalDate.now();
+        return !bookingMap.containsKey(today); // Room is available for the entire date range
     }
 }
 

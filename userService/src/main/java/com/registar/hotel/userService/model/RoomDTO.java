@@ -18,5 +18,6 @@ public class RoomDTO {
     private String customType;
     private double pricePerNight;
     private Map<LocalDate, Boolean> bookingMap;
+    private boolean isAvailableToday;
     private Long hotelId;
 }
