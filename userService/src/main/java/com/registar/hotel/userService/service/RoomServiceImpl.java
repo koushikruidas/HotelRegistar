@@ -3,6 +3,7 @@ package com.registar.hotel.userService.service;
 import com.registar.hotel.userService.entity.Room;
 import com.registar.hotel.userService.model.CreateRoomRequest;
 import com.registar.hotel.userService.model.RoomDTO;
+import com.registar.hotel.userService.model.response.AvailabilityRoomDTO;
 import com.registar.hotel.userService.repository.HotelRepository;
 import com.registar.hotel.userService.repository.RoomRepository;
 import org.modelmapper.ModelMapper;
@@ -31,10 +32,11 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
-    public List<RoomDTO> getAllRooms(Long id) {
+    public List<AvailabilityRoomDTO> getAllRooms(Long id) {
         List<Room> rooms = roomRepository.findByHotelId(id);
+        rooms.forEach(Room::updateAvailability);
         return rooms.stream()
-                    .map(room -> modelMapper.map(room, RoomDTO.class))
+                    .map(room -> modelMapper.map(room, AvailabilityRoomDTO.class))
                     .collect(Collectors.toList());
     }
 

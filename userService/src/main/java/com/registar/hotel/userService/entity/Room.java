@@ -33,20 +33,6 @@ public class Room {
 
     @Transient
     private boolean availableToday;
-
-
-    /**
-     *
-     * @PostLoad, @PostPersist, @PostUpdate:
-     * These annotations ensure that the updateAvailability method is called automatically after an entity is loaded
-     * from the database or persisted/updated. This method sets the value of availableToday by calling isAvailableForToday().
-     *
-     * isAvailableForToday Method: This method checks if the room is available today by iterating
-     * over the bookings list and determining if any booking overlaps with today.
-     * */
-    @PostLoad
-    @PostPersist
-    @PostUpdate
     public void updateAvailability() {
         this.availableToday = isAvailableForToday();
     }

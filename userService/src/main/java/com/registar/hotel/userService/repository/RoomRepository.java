@@ -1,6 +1,7 @@
 package com.registar.hotel.userService.repository;
 
 import com.registar.hotel.userService.entity.Room;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -10,6 +11,8 @@ import java.util.List;
 
 @Repository
 public interface RoomRepository extends JpaRepository<Room, Long> {
+    // Fetch all rooms of a hotel with their bookings eagerly loaded
+    @EntityGraph(attributePaths = {"bookings"})
     List<Room> findByHotelId(Long id);
     @Query(value = "SELECT r.* FROM room r " +
             "WHERE r.hotel_id IN (:hotelIds) " +

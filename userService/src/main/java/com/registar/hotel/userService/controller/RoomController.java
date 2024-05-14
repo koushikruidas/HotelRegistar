@@ -6,6 +6,7 @@ import com.registar.hotel.userService.model.CreateRoomRequest;
 import com.registar.hotel.userService.model.HotelDTO;
 import com.registar.hotel.userService.model.RoomDTO;
 import com.registar.hotel.userService.model.request.UpdateRoomRequest;
+import com.registar.hotel.userService.model.response.AvailabilityRoomDTO;
 import com.registar.hotel.userService.service.HotelService;
 import com.registar.hotel.userService.service.RoomService;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -43,8 +44,8 @@ public class RoomController {
     }
 
     @GetMapping("/hotel/{hotelId}")
-    public ResponseEntity<List<RoomDTO>> getAllRooms(@PathVariable("hotelId") Long hotelId) {
-        List<RoomDTO> allRooms = roomService.getAllRooms(hotelId);
+    public ResponseEntity<List<AvailabilityRoomDTO>> getAllRooms(@PathVariable("hotelId") Long hotelId) {
+        List<AvailabilityRoomDTO> allRooms = roomService.getAllRooms(hotelId);
         return new ResponseEntity<>(allRooms, HttpStatus.OK);
     }
 
