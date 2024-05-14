@@ -97,9 +97,9 @@ public class S3Service {
     }
 
 
-    public String uploadFileForGuest(MultipartFile file, String name, String mobileNo) throws IOException {
+    public String uploadFileForGuest(MultipartFile file, String name, String mobileNo, LocalDate checkInDate) throws IOException {
         // Generate a unique key for the file in the S3 bucket
-        String keyName = String.format("uploads/%s/%s/%s/%s", LocalDate.now(), mobileNo, name, file.getOriginalFilename());
+        String keyName = String.format("uploads/%s/%s/%s/%s", checkInDate, mobileNo, name, file.getOriginalFilename());
         // Upload the file to S3 bucket
         return uploadFile(file, keyName);
     }

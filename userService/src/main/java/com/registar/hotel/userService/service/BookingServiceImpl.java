@@ -62,8 +62,8 @@ public class BookingServiceImpl implements BookingService {
             MultipartFile govtId = govtIds[i];
             MultipartFile picture = pictures[i];
 
-            govtIdUploadFutures.add(uploadFileAsync(govtId, guestDTO.getName(), guestDTO.getMobileNo()));
-            picUploadFutures.add(uploadFileAsync(picture, guestDTO.getName(), guestDTO.getMobileNo()));
+            govtIdUploadFutures.add(uploadFileAsync(govtId, guestDTO.getName(), guestDTO.getMobileNo(), bookingDTO.getCheckInDate()));
+            picUploadFutures.add(uploadFileAsync(picture, guestDTO.getName(), guestDTO.getMobileNo(), bookingDTO.getCheckInDate()));
         }
 
         // Wait for all file uploads to complete
@@ -123,10 +123,10 @@ public class BookingServiceImpl implements BookingService {
     }
 
     // Helper method to upload file asynchronously
-    private CompletableFuture<String> uploadFileAsync(MultipartFile file, String name, String mobileNo) {
+    private CompletableFuture<String> uploadFileAsync(MultipartFile file, String name, String mobileNo, LocalDate checkInDate) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                return s3Service.uploadFileForGuest(file, name, mobileNo);
+                return s3Service.uploadFileForGuest(file, name, mobileNo, checkInDate);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
