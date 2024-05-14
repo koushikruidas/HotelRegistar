@@ -31,6 +31,39 @@ public class Room {
     @ManyToMany(mappedBy = "bookedRooms", cascade = CascadeType.ALL)
     private List<Booking> bookings;
 
+    @Transient
+    private boolean availableToday;
+
+
+    /**
+     *
+     * @PostLoad, @PostPersist, @PostUpdate:
+     * These annotations ensure that the updateAvailability method is called automatically after an entity is loaded
+     * from the database or persisted/updated. This method sets the value of availableToday by calling isAvailableForToday().
+     *
+     * isAvailableForToday Method: This method checks if the room is available today by iterating
+     * over the bookings list and determining if any booking overlaps with today.
+     * */
+    @PostLoad
+    @PostPersist
+    @PostUpdate
+    public void updateAvailability() {
+        this.availableToday = isAvailableForToday();
+    }
+
+    public boolean isAvailableForToday() {
+        LocalDate today = LocalDate.now();
+        if (bookings == null) {
+            return true;
+        }
+        for (Booking booking : bookings) {
+            if (booking.getCheckInDate().isBefore(today.plusDays(1)) && booking.getCheckOutDate().isAfter(today.minusDays(1))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public List<LocalDate> getUnavailableDaysForMonth(int year, int month) {
         List<LocalDate> unavailableDays = new ArrayList<>();
 
