@@ -70,15 +70,6 @@ public class HotelController {
         }
     }
 
-/*
-    This was for testing purpose to see all the hotels listed in our system.
-
-    @GetMapping
-    public ResponseEntity<List<HotelDTO>> getAllHotels() {
-        List<HotelDTO> allHotels = hotelService.getAllHotels();
-        return new ResponseEntity<>(allHotels, HttpStatus.OK);
-    }*/
-
     @PutMapping("/{hotelId}")
     @PreAuthorize("hasRole('ROLE_OWNER')")
     public ResponseEntity<HotelDTO> updateHotel(@PathVariable Long hotelId, @RequestBody CreateHotelRequest hotelRequest) {

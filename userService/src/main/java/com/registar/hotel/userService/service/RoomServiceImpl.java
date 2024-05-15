@@ -33,7 +33,7 @@ public class RoomServiceImpl implements RoomService {
 
     @Override
     public List<AvailabilityRoomDTO> getAllRooms(Long id) {
-        List<Room> rooms = roomRepository.findByHotelId(id);
+        List<Room> rooms = roomRepository.findRoomsWithBookingsForToday(id, LocalDate.now());
         rooms.forEach(Room::updateAvailability);
         return rooms.stream()
                     .map(room -> modelMapper.map(room, AvailabilityRoomDTO.class))
