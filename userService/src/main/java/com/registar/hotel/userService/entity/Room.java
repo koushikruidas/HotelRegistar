@@ -38,28 +38,33 @@ public class Room {
     }
 
     public boolean isAvailableForToday() {
-        LocalDate today = LocalDate.now();
-        if (bookings == null) {
-            return true;
-        }
-        for (Booking booking : bookings) {
-            if (booking.getCheckInDate().isBefore(today.plusDays(1)) && booking.getCheckOutDate().isAfter(today.minusDays(1))) {
-                return false;
-            }
-        }
-        return true;
+        // Check if bookings are fetched and determine availability based on that
+        return bookings == null || bookings.isEmpty();
     }
 
     public List<LocalDate> getUnavailableDaysForMonth(int year, int month) {
         List<LocalDate> unavailableDays = new ArrayList<>();
 
+        // Calculate the first and last days of the specified month
+        LocalDate firstDayOfMonth = LocalDate.of(year, month, 1);
+        LocalDate lastDayOfMonth = firstDayOfMonth.withDayOfMonth(firstDayOfMonth.lengthOfMonth());
+
         // Iterate over each booking in the room
         for (Booking booking : bookings) {
-            // Check if the booking overlaps with any day in the specified month
-            for (LocalDate date = LocalDate.of(year, month, 1); date.getMonthValue() == month; date = date.plusDays(1)) {
-                if (booking.getCheckInDate().isBefore(date.plusDays(1)) && booking.getCheckOutDate().isAfter(date.minusDays(1))) {
-                    unavailableDays.add(date);
+            LocalDate checkInDate = booking.getCheckInDate();
+            LocalDate checkOutDate = booking.getCheckOutDate();
+
+            // Find the intersection between the booking period and the days of the month
+            LocalDate intersectionStart = checkInDate.isAfter(firstDayOfMonth) ? checkInDate : firstDayOfMonth;
+            LocalDate intersectionEnd = checkOutDate.isBefore(lastDayOfMonth) ? checkOutDate : lastDayOfMonth;
+
+            // Add the intersection days to the unavailableDays list
+            LocalDate currentDate = intersectionStart;
+            while (!currentDate.isAfter(intersectionEnd)) {
+                if (!unavailableDays.contains(currentDate)) {
+                    unavailableDays.add(currentDate);
                 }
+                currentDate = currentDate.plusDays(1);
             }
         }
 
