@@ -1,6 +1,5 @@
 package com.registar.hotel.userService.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -32,36 +31,44 @@ public class Room {
     @ManyToMany(mappedBy = "bookedRooms", cascade = CascadeType.ALL)
     private List<Booking> bookings;
 
-    @ElementCollection
-    @CollectionTable(name = "room_availability", joinColumns = @JoinColumn(name = "room_id"))
-    @MapKeyTemporal(TemporalType.DATE)
-    @Column(name = "isBooked")
-    private Map<LocalDate, Boolean> bookingMap = new HashMap<>();
-
     @Transient
-    private boolean isAvaiableToday = isAvaiableToday();
-
-    public void setAvailabilityForDateRange(LocalDate startDate, LocalDate endDate, boolean isBooked) {
-        LocalDate currentDate = startDate;
-        while (!currentDate.isAfter(endDate)) {
-            bookingMap.put(currentDate, isBooked);
-            currentDate = currentDate.plusDays(1); // Increment by one day
-        }
-    }
-
-    public boolean isAvailableForDateRange(LocalDate startDate, LocalDate endDate) {
-        for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
-            if (bookingMap.containsKey(date) && bookingMap.get(date)) {
-                // Room is not available for this date
-                return false;
-            }
-        }
-        return true; // Room is available for the entire date range
+    private boolean availableToday;
+    public void updateAvailability() {
+        this.availableToday = isAvailableForToday();
     }
 
     public boolean isAvailableForToday() {
-        LocalDate today = LocalDate.now();
-        return !bookingMap.containsKey(today); // Room is available for the entire date range
+        // Check if bookings are fetched and determine availability based on that
+        return bookings == null || bookings.isEmpty();
+    }
+
+    public List<LocalDate> getUnavailableDaysForMonth(int year, int month) {
+        List<LocalDate> unavailableDays = new ArrayList<>();
+
+        // Calculate the first and last days of the specified month
+        LocalDate firstDayOfMonth = LocalDate.of(year, month, 1);
+        LocalDate lastDayOfMonth = firstDayOfMonth.withDayOfMonth(firstDayOfMonth.lengthOfMonth());
+
+        // Iterate over each booking in the room
+        for (Booking booking : bookings) {
+            LocalDate checkInDate = booking.getCheckInDate();
+            LocalDate checkOutDate = booking.getCheckOutDate();
+
+            // Find the intersection between the booking period and the days of the month
+            LocalDate intersectionStart = checkInDate.isAfter(firstDayOfMonth) ? checkInDate : firstDayOfMonth;
+            LocalDate intersectionEnd = checkOutDate.isBefore(lastDayOfMonth) ? checkOutDate : lastDayOfMonth;
+
+            // Add the intersection days to the unavailableDays list
+            LocalDate currentDate = intersectionStart;
+            while (!currentDate.isAfter(intersectionEnd)) {
+                if (!unavailableDays.contains(currentDate)) {
+                    unavailableDays.add(currentDate);
+                }
+                currentDate = currentDate.plusDays(1);
+            }
+        }
+
+        return unavailableDays;
     }
 }
 
