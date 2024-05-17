@@ -12,11 +12,8 @@ import java.util.List;
 
 @Repository
 public interface RoomRepository extends JpaRepository<Room, Long> {
+    @EntityGraph(attributePaths = {"bookings"})
     List<Room> findByHotelId(Long id);
-
-    @Query("SELECT DISTINCT r FROM Room r LEFT JOIN r.bookings b " +
-            "ON (b.checkInDate <= :today AND b.checkOutDate >= :today) WHERE r.hotel.id = :hotelId")
-    List<Room> findRoomsWithBookingsForToday(@Param("hotelId") Long hotelId, @Param("today") LocalDate today);
 
     @Query(value = "SELECT r.* FROM room r " +
             "WHERE r.hotel_id IN (:hotelIds) " +

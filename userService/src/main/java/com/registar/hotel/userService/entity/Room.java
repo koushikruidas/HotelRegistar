@@ -39,7 +39,13 @@ public class Room {
 
     public boolean isAvailableForToday() {
         // Check if bookings are fetched and determine availability based on that
-        return bookings == null || bookings.isEmpty();
+        for (Booking booking : bookings){
+            if ( (booking.getCheckInDate().isBefore(LocalDate.now()) || booking.getCheckInDate().equals(LocalDate.now()) )
+                    && booking.getCheckOutDate().isAfter(LocalDate.now())){
+                return false;
+            }
+        }
+        return true;
     }
 
     public List<LocalDate> getUnavailableDaysForMonth(int year, int month) {
