@@ -8,6 +8,7 @@ import com.registar.hotel.userService.model.CreateHotelRequest;
 import com.registar.hotel.userService.model.HotelDTO;
 import com.registar.hotel.userService.model.UserDTO;
 import com.registar.hotel.userService.model.response.HotelResponse;
+import com.registar.hotel.userService.model.response.RoomAvailabilityResponse;
 import com.registar.hotel.userService.repository.HotelRepository;
 import com.registar.hotel.userService.repository.UserRepository;
 import org.modelmapper.ModelMapper;
@@ -159,7 +160,8 @@ public class HotelServiceImpl implements HotelService {
     }
 
     @Transactional
-    public Map<Room, List<LocalDate>> getAvailabilityMapForMonth(Long hotelId, int year, int month) {
+    public List<RoomAvailabilityResponse> getAvailabilityMapForMonth(Long hotelId, int year, int month) {
+        List<RoomAvailabilityResponse> availabilityResponses = new ArrayList<>();
         Optional<Hotel> optionalHotel = hotelRepository.findById(hotelId);
         if (optionalHotel.isEmpty()) {
             // Handle hotel not found
@@ -167,12 +169,14 @@ public class HotelServiceImpl implements HotelService {
         }
 
         Hotel hotel = optionalHotel.get();
-        Map<Room, List<LocalDate>> availabilityMap = new HashMap<>();
         for (Room room : hotel.getRooms()) {
             List<LocalDate> unavailableDays = room.getUnavailableDaysForMonth(year, month);
-            availabilityMap.put(room, unavailableDays);
+             RoomAvailabilityResponse response = modelMapper.map(room, RoomAvailabilityResponse.class);
+            response.setHotelId(room.getHotel().getId());
+            response.setUnavailableDays(unavailableDays);
+            availabilityResponses.add(response);
         }
 
-        return availabilityMap;
+        return availabilityResponses;
     }
 }

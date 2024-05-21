@@ -8,6 +8,7 @@ import com.registar.hotel.userService.model.CreateRoomRequest;
 import com.registar.hotel.userService.model.HotelDTO;
 import com.registar.hotel.userService.model.RoomDTO;
 import com.registar.hotel.userService.model.response.HotelResponse;
+import com.registar.hotel.userService.model.response.RoomAvailabilityResponse;
 import com.registar.hotel.userService.service.HotelService;
 import com.registar.hotel.userService.service.RoomService;
 import com.registar.hotel.userService.service.UserService;
@@ -138,12 +139,12 @@ public class HotelController {
     }
 
     @GetMapping("/{hotelId}/availability")
-    public ResponseEntity<Map<Room, List<LocalDate>>> getAvailabilityForMonth(
+    public ResponseEntity<List<RoomAvailabilityResponse>> getAvailabilityForMonth(
             @PathVariable Long hotelId,
             @RequestParam int year,
             @RequestParam int month
     ) {
-        Map<Room, List<LocalDate>> availabilityMap = hotelService.getAvailabilityMapForMonth(hotelId, year, month);
+        List<RoomAvailabilityResponse> availabilityMap = hotelService.getAvailabilityMapForMonth(hotelId, year, month);
         if (availabilityMap == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
