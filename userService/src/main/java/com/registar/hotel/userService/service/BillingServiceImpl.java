@@ -118,7 +118,9 @@ public class BillingServiceImpl implements BillingService {
             roomTable.setSpacingAfter(10f);
             roomTable.addCell(new PdfPCell(new Phrase("Room Number", new Font(Font.FontFamily.HELVETICA, 11, Font.BOLD))));
             roomTable.addCell(new PdfPCell(new Phrase("Room Type", new Font(Font.FontFamily.HELVETICA, 11, Font.BOLD))));
-            roomTable.addCell(new PdfPCell(new Phrase("Price", new Font(Font.FontFamily.HELVETICA, 11, Font.BOLD))));
+            PdfPCell priceHeaderCell = new PdfPCell(new Phrase("Price", new Font(Font.FontFamily.HELVETICA, 11, Font.BOLD)));
+            priceHeaderCell.setHorizontalAlignment(Element.ALIGN_RIGHT); // Align header to the right
+            roomTable.addCell(priceHeaderCell);
 
             for (RoomDTO room : billDTO.getRooms()) {
                 roomTable.addCell(new PdfPCell(new Phrase(String.valueOf(room.getRoomNumber()), new Font(Font.FontFamily.HELVETICA, 11))));
