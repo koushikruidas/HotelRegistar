@@ -51,6 +51,7 @@ public class Booking {
 
     @OneToMany(mappedBy = "bookings", cascade = CascadeType.ALL)
     private List<AdditionalServices> services;
+
 }
 
 
