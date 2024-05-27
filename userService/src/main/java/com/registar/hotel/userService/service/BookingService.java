@@ -10,7 +10,7 @@ import java.util.Optional;
 
 public interface BookingService {
     BookingResponse saveBookingWithGuests(BookingWithGuestsDTO bookingWithGuestsDTO, MultipartFile[] govtIds, MultipartFile[] pictures);
-    Optional<BookingResponse> getBookingById(int id);
+    Optional<BookingResponse> getBookingById(long id);
     List<BookingResponse> getAllBookings();
-    void deleteBooking(int id);
+    void deleteBooking(long id);
 }

@@ -225,7 +225,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional
-    public Optional<BookingResponse> getBookingById(int id) {
+    public Optional<BookingResponse> getBookingById(long id) {
         Optional<Booking> bookingOptional = bookingRepository.findById(id);
         if (bookingOptional.isEmpty()) throw new ResourceNotFoundException("Not Found!!");
         return bookingOptional.map(booking -> modelMapper.map(booking, BookingResponse.class));
@@ -242,7 +242,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional
-    public void deleteBooking(int id) {
+    public void deleteBooking(long id) {
         bookingRepository.deleteById(id);
     }
 

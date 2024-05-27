@@ -18,7 +18,7 @@ import java.util.List;
 public class Booking {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int Id;
+    private Long Id;
 
     private LocalDate checkInDate;
     private LocalDate checkOutDate;
@@ -48,6 +48,9 @@ public class Booking {
             inverseJoinColumns = @JoinColumn(name = "guest_id")
     )
     private List<Guest> guests;
+
+    @OneToMany(mappedBy = "bookings", cascade = CascadeType.ALL)
+    private List<AdditionalServices> services;
 }
 
 

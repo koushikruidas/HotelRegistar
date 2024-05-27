@@ -35,7 +35,7 @@ public class BookingController {
         return new ResponseEntity<>(createdBooking, HttpStatus.CREATED);
     }
     @GetMapping("/{id}")
-    public ResponseEntity<BookingResponse> getBookingById(@PathVariable("id") int id) {
+    public ResponseEntity<BookingResponse> getBookingById(@PathVariable("id") long id) {
         Optional<BookingResponse> bookingOptional = bookingService.getBookingById(id);
         return bookingOptional.map(bookingResponse -> new ResponseEntity<>(bookingResponse, HttpStatus.OK))
                                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
@@ -48,7 +48,7 @@ public class BookingController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteBooking(@PathVariable("id") int id) {
+    public ResponseEntity<Void> deleteBooking(@PathVariable("id") long id) {
         bookingService.deleteBooking(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }

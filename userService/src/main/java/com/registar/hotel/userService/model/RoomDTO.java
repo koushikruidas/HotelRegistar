@@ -2,6 +2,7 @@ package com.registar.hotel.userService.model;
 
 import com.registar.hotel.userService.entity.RoomType;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
