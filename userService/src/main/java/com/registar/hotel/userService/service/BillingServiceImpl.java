@@ -1,0 +1,163 @@
+package com.registar.hotel.userService.service;
+
+import com.itextpdf.text.*;
+import com.itextpdf.text.pdf.PdfPCell;
+import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfWriter;
+import com.registar.hotel.userService.entity.*;
+import com.registar.hotel.userService.model.RoomDTO;
+import com.registar.hotel.userService.model.response.BillDTO;
+import com.registar.hotel.userService.repository.AdditionalServicesRepository;
+import com.registar.hotel.userService.repository.BookingRepository;
+import com.registar.hotel.userService.repository.GuestRepository;
+import com.registar.hotel.userService.repository.HotelRepository;
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.*;
+import org.springframework.stereotype.Service;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+@Service
+public class BillingServiceImpl implements BillingService {
+
+    private final BookingRepository bookingRepository;
+    private final ModelMapper modelMapper;
+    private final AdditionalServicesRepository additionalServiceRepository;
+    @Autowired
+    public BillingServiceImpl(BookingRepository bookingRepository,
+                              AdditionalServicesRepository additionalServiceRepository,
+                              ModelMapper modelMapper) {
+        this.bookingRepository = bookingRepository;
+        this.additionalServiceRepository = additionalServiceRepository;
+        this.modelMapper = modelMapper;
+    }
+
+    @Override
+    public ResponseEntity<byte[]> generateBillPdf(Long bookingId) {
+        Optional<Booking> bookingOptional = bookingRepository.findById(bookingId);
+        if (bookingOptional.isEmpty()) {
+            throw new RuntimeException("Booking not found with ID: " + bookingId);
+        }
+
+        Booking booking = bookingOptional.get();
+        List<Guest> guests = booking.getGuests();
+        List<Room> rooms = booking.getBookedRooms();
+        Hotel hotel = rooms.get(0).getHotel();
+        List<AdditionalServices> services = additionalServiceRepository.findByBookings_Id(bookingId);
+
+        double additionalServicesCost = services.stream().mapToDouble(AdditionalServices::getCost).sum();
+        double totalCost = booking.getTotalPrice() + additionalServicesCost;
+
+        List<String> guestNames = guests.stream().map(Guest::getName).collect(Collectors.toList());
+        List<String> guestMobileNos = guests.stream().map(Guest::getMobileNo).collect(Collectors.toList());
+
+        List<RoomDTO> roomDTOs = rooms.stream().map(room -> modelMapper.map(room,RoomDTO.class))
+                .collect(Collectors.toList());
+
+        BillDTO billDTO = BillDTO.builder()
+                .hotelName(hotel.getName())
+                .gstin(hotel.getGstNumber())
+                .guestName(guestNames)
+                .guestMobileNo(guestMobileNos)
+                .rooms(roomDTOs)
+                .totalCost(totalCost)
+                .build();
+
+        // Generate PDF
+        byte[] pdfContent = generatePdf(billDTO, services);
+        billDTO.setPdfContent(pdfContent);
+
+        // Set response headers
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDisposition(ContentDisposition.builder("inline").filename("bill.pdf").build());
+
+        return new ResponseEntity<>(pdfContent, headers, HttpStatus.OK);
+    }
+    private byte[] generatePdf(BillDTO billDTO, List<AdditionalServices> services) {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            Document document = new Document();
+            PdfWriter.getInstance(document, baos);
+            document.open();
+
+            // Hotel name in the middle, bold, size 18
+            Paragraph hotelName = new Paragraph(billDTO.getHotelName(), new Font(Font.FontFamily.HELVETICA, 18, Font.BOLD));
+            hotelName.setAlignment(Element.ALIGN_CENTER);
+            document.add(hotelName);
+
+            // GSTIN on the right side, bold, size 13
+            Paragraph gstin = new Paragraph("GSTIN: " + billDTO.getGstin(), new Font(Font.FontFamily.HELVETICA, 13, Font.BOLD));
+            gstin.setAlignment(Element.ALIGN_RIGHT);
+            document.add(gstin);
+
+            document.add(Chunk.NEWLINE); // Add a newline for spacing
+
+            // Guest details in table with bold headers
+            PdfPTable guestTable = new PdfPTable(2);
+            guestTable.setWidthPercentage(100);
+            guestTable.setSpacingBefore(10f);
+            guestTable.setSpacingAfter(10f);
+            guestTable.addCell(new PdfPCell(new Phrase("Guest Name", new Font(Font.FontFamily.HELVETICA, 11, Font.BOLD))));
+            guestTable.addCell(new PdfPCell(new Phrase("Mobile No", new Font(Font.FontFamily.HELVETICA, 11, Font.BOLD))));
+
+            for (int i = 0; i < billDTO.getGuestName().size(); i++) {
+                guestTable.addCell(new PdfPCell(new Phrase(billDTO.getGuestName().get(i), new Font(Font.FontFamily.HELVETICA, 11))));
+                guestTable.addCell(new PdfPCell(new Phrase(billDTO.getGuestMobileNo().get(i), new Font(Font.FontFamily.HELVETICA, 11))));
+            }
+            document.add(guestTable);
+
+            // Add room details
+            PdfPTable roomTable = new PdfPTable(3);
+            roomTable.setWidthPercentage(100);
+            roomTable.setSpacingBefore(10f);
+            roomTable.setSpacingAfter(10f);
+            roomTable.addCell(new PdfPCell(new Phrase("Room Number", new Font(Font.FontFamily.HELVETICA, 11, Font.BOLD))));
+            roomTable.addCell(new PdfPCell(new Phrase("Room Type", new Font(Font.FontFamily.HELVETICA, 11, Font.BOLD))));
+            roomTable.addCell(new PdfPCell(new Phrase("Price", new Font(Font.FontFamily.HELVETICA, 11, Font.BOLD))));
+
+            for (RoomDTO room : billDTO.getRooms()) {
+                roomTable.addCell(new PdfPCell(new Phrase(String.valueOf(room.getRoomNumber()), new Font(Font.FontFamily.HELVETICA, 11))));
+                roomTable.addCell(new PdfPCell(new Phrase(room.getType().name(), new Font(Font.FontFamily.HELVETICA, 11))));
+                PdfPCell priceCell = new PdfPCell(new Phrase(String.valueOf(room.getPricePerNight()), new Font(Font.FontFamily.HELVETICA, 11)));
+                priceCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                roomTable.addCell(priceCell);
+            }
+            document.add(roomTable);
+
+            // Add additional services details
+            Paragraph additionalServicesHeader = new Paragraph("Additional Services:", new Font(Font.FontFamily.HELVETICA, 11, Font.BOLD));
+            document.add(additionalServicesHeader);
+
+            PdfPTable servicesTable = new PdfPTable(2);
+            servicesTable.setWidthPercentage(100);
+            servicesTable.setSpacingBefore(10f);
+            servicesTable.setSpacingAfter(10f);
+
+            for (AdditionalServices service : services) {
+                servicesTable.addCell(new PdfPCell(new Phrase(service.getName(), new Font(Font.FontFamily.HELVETICA, 11))));
+                PdfPCell costCell = new PdfPCell(new Phrase(String.valueOf(service.getCost()), new Font(Font.FontFamily.HELVETICA, 11)));
+                costCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                servicesTable.addCell(costCell);
+            }
+            document.add(servicesTable);
+
+            // Add total cost, bold
+            Paragraph totalCost = new Paragraph("Total Cost: " + billDTO.getTotalCost(), new Font(Font.FontFamily.HELVETICA, 11, Font.BOLD));
+            totalCost.setAlignment(Element.ALIGN_RIGHT);
+            document.add(totalCost);
+
+            document.close();
+            return baos.toByteArray();
+        } catch (DocumentException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Failed to generate PDF");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+}
