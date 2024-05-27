@@ -58,8 +58,8 @@ public class Room {
         // Iterate over each booking in the room
         for (Booking booking : bookings) {
             LocalDate checkInDate = booking.getCheckInDate();
-            LocalDate checkOutDate = booking.getCheckOutDate();
-
+            // to exclude the checkout day, as if we check out means that day is available for another booking.
+            LocalDate checkOutDate = booking.getCheckOutDate().minusDays(1);
             // Find the intersection between the booking period and the days of the month
             LocalDate intersectionStart = checkInDate.isAfter(firstDayOfMonth) ? checkInDate : firstDayOfMonth;
             LocalDate intersectionEnd = checkOutDate.isBefore(lastDayOfMonth) ? checkOutDate : lastDayOfMonth;
