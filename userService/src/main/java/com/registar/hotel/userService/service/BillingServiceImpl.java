@@ -28,6 +28,7 @@ public class BillingServiceImpl implements BillingService {
     private final BookingRepository bookingRepository;
     private final ModelMapper modelMapper;
     private final AdditionalServicesRepository additionalServiceRepository;
+
     @Autowired
     public BillingServiceImpl(BookingRepository bookingRepository,
                               AdditionalServicesRepository additionalServiceRepository,
@@ -55,13 +56,16 @@ public class BillingServiceImpl implements BillingService {
 
         List<String> guestNames = guests.stream().map(Guest::getName).collect(Collectors.toList());
         List<String> guestMobileNos = guests.stream().map(Guest::getMobileNo).collect(Collectors.toList());
+        List<String> hotelPhoneNos = hotel.getPhoneNumbers().stream().map(PhoneNumber::getNumber).toList();
 
-        List<RoomDTO> roomDTOs = rooms.stream().map(room -> modelMapper.map(room,RoomDTO.class))
+        List<RoomDTO> roomDTOs = rooms.stream().map(room -> modelMapper.map(room, RoomDTO.class))
                 .collect(Collectors.toList());
 
         BillDTO billDTO = BillDTO.builder()
                 .hotelName(hotel.getName())
                 .gstin(hotel.getGstNumber())
+                .address(hotel.getAddress())
+                .phoneNumbers(hotelPhoneNos)
                 .guestName(guestNames)
                 .guestMobileNo(guestMobileNos)
                 .rooms(roomDTOs)
@@ -85,15 +89,41 @@ public class BillingServiceImpl implements BillingService {
             PdfWriter.getInstance(document, baos);
             document.open();
 
-            // Hotel name in the middle, bold, size 18
-            Paragraph hotelName = new Paragraph(billDTO.getHotelName(), new Font(Font.FontFamily.HELVETICA, 18, Font.BOLD));
-            hotelName.setAlignment(Element.ALIGN_CENTER);
-            document.add(hotelName);
+            // Hotel name in the top center
+            Paragraph hotelNameParagraph = new Paragraph(billDTO.getHotelName(), new Font(Font.FontFamily.HELVETICA, 18, Font.BOLD));
+            hotelNameParagraph.setAlignment(Element.ALIGN_CENTER);
+            document.add(hotelNameParagraph);
 
-            // GSTIN on the right side, bold, size 13
-            Paragraph gstin = new Paragraph("GSTIN: " + billDTO.getGstin(), new Font(Font.FontFamily.HELVETICA, 13, Font.BOLD));
-            gstin.setAlignment(Element.ALIGN_RIGHT);
-            document.add(gstin);
+            // Create a table for the header with two cells
+            PdfPTable headerTable = new PdfPTable(2);
+            headerTable.setWidthPercentage(100);
+            headerTable.setSpacingAfter(10f);
+            headerTable.setSpacingBefore(10f);
+
+            // Address and phone numbers on the left side
+            PdfPCell leftCell = new PdfPCell();
+            leftCell.setBorder(Rectangle.NO_BORDER);
+            Paragraph leftParagraph = new Paragraph();
+            leftParagraph.add(new Phrase("Address:\n", new Font(Font.FontFamily.HELVETICA, 11, Font.BOLD)));
+            // Wrap the address for better presentation
+            leftParagraph.add(new Phrase(billDTO.getAddress()+"\n", new Font(Font.FontFamily.HELVETICA, 11)));
+            leftParagraph.add(new Phrase("Phone Numbers:\n", new Font(Font.FontFamily.HELVETICA, 11, Font.BOLD)));
+            for (String phoneNumber : billDTO.getPhoneNumbers()) {
+                leftParagraph.add(new Phrase(phoneNumber + "\n", new Font(Font.FontFamily.HELVETICA, 11)));
+            }
+            leftParagraph.add(Chunk.NEWLINE);
+            leftCell.addElement(leftParagraph);
+            headerTable.addCell(leftCell);
+
+// GSTIN on the right side
+            PdfPCell rightCell = new PdfPCell(new Phrase("GSTIN :"+billDTO.getGstin(), new Font(Font.FontFamily.HELVETICA, 11, Font.BOLD)));
+            rightCell.setBorder(Rectangle.NO_BORDER);
+            rightCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            headerTable.addCell(rightCell);
+
+            document.add(headerTable);
+
+
 
             document.add(Chunk.NEWLINE); // Add a newline for spacing
 
@@ -162,4 +192,5 @@ public class BillingServiceImpl implements BillingService {
             throw new RuntimeException(e);
         }
     }
+
 }

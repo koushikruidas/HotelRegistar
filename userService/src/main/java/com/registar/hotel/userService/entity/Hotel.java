@@ -5,6 +5,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import jakarta.persistence.*;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -12,7 +14,7 @@ import java.util.Set;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@ToString(exclude = {"rooms"})
+@ToString(exclude = {"rooms", "phoneNumbers"})
 @Entity
 @Table(name = "hotels")
 public class Hotel {
@@ -21,6 +23,10 @@ public class Hotel {
     private Long id;
     private String name;
     private String address;
+
+    @OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PhoneNumber> phoneNumbers;
+
     @Column(unique = true)
     private String gstNumber;
     @ManyToOne

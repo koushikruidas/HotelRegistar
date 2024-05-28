@@ -14,7 +14,9 @@ import java.util.List;
 @Builder
 public class BillDTO {
     private String hotelName;
+    private String address;
     private String gstin;
+    private List<String> phoneNumbers;
     private List<String> guestName;
     private List<String> guestMobileNo;
     private List<RoomDTO> rooms;

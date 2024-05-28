@@ -1,6 +1,5 @@
 package com.registar.hotel.userService.controller;
 
-import com.registar.hotel.userService.model.response.BillDTO;
 import com.registar.hotel.userService.service.BillingService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

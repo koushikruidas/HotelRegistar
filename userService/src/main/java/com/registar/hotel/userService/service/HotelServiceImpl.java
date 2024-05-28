@@ -1,12 +1,12 @@
 package com.registar.hotel.userService.service;
 
 import com.registar.hotel.userService.entity.Hotel;
+import com.registar.hotel.userService.entity.PhoneNumber;
 import com.registar.hotel.userService.entity.Room;
 import com.registar.hotel.userService.entity.User;
 import com.registar.hotel.userService.exception.ResourceNotFoundException;
 import com.registar.hotel.userService.model.CreateHotelRequest;
 import com.registar.hotel.userService.model.HotelDTO;
-import com.registar.hotel.userService.model.UserDTO;
 import com.registar.hotel.userService.model.response.HotelResponse;
 import com.registar.hotel.userService.model.response.RoomAvailabilityResponse;
 import com.registar.hotel.userService.repository.HotelRepository;
@@ -45,17 +45,28 @@ public class HotelServiceImpl implements HotelService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = ((UserDetails) authentication.getPrincipal()).getUsername();
         Optional<User> owner = userRepository.findByEmail(username);
-        List<User> employees = userRepository.findByIds(hotelRequest.getEmployeeIds());
 
+        if (owner.isEmpty()) {
+            throw new RuntimeException("Owner not present for email id: " + username);
+        }
+
+        List<User> employees = userRepository.findByIds(hotelRequest.getEmployeeIds());
         Hotel hotel = modelMapper.map(hotelRequest, Hotel.class);
+        List<PhoneNumber> phoneNumbers = hotelRequest.getPhoneNumbers().stream().map(number -> {
+            PhoneNumber phoneNumber = new PhoneNumber();
+            phoneNumber.setNumber(number);
+            phoneNumber.setHotel(hotel);
+            return phoneNumber;
+        }).toList();
+        hotel.setPhoneNumbers(phoneNumbers);
         hotel.setEmployees(new HashSet<>(employees));
-        if (owner.isPresent()) {
-            hotel.setOwner(owner.get());
-            return modelMapper.map(hotelRepository.save(modelMapper.map(hotel,Hotel.class)), HotelDTO.class);
-        }
-        else {
-            throw new RuntimeException("owner not present for mail id: "+username);
-        }
+        hotel.setOwner(owner.get());
+        Hotel updated = hotelRepository.save(hotel);
+        HotelDTO hotelDTO = modelMapper.map(updated, HotelDTO.class);
+        hotelDTO.setPhoneNumbers(updated.getPhoneNumbers().stream()
+                        .map(PhoneNumber::getNumber)
+                        .collect(Collectors.toList()));
+        return hotelDTO;
     }
 
     @Transactional
@@ -81,10 +92,24 @@ public class HotelServiceImpl implements HotelService {
         if (user.isPresent()){
             List<Hotel> hotels = hotelRepository.findByOwner(user.get());
             return hotels.stream()
-                    .map(hotel -> modelMapper.map(hotel, HotelResponse.class))
+                    .map(this::mapHotelToHotelResponse)
                     .collect(Collectors.toList());
         }
         return null;
+    }
+
+    private HotelResponse mapHotelToHotelResponse(Hotel hotel) {
+        // Use ModelMapper for basic field mapping
+        HotelResponse hotelResponse = modelMapper.map(hotel, HotelResponse.class);
+
+        // Manually map the phone numbers
+        List<String> phoneNumbers = hotel.getPhoneNumbers().stream()
+                        .map(PhoneNumber::getNumber)
+                        .collect(Collectors.toList());
+
+        hotelResponse.setPhoneNumbers(phoneNumbers);
+
+        return hotelResponse;
     }
 
     @Override
