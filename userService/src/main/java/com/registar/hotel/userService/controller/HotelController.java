@@ -50,7 +50,7 @@ public class HotelController {
     public ResponseEntity<HotelDTO> getHotelById(@PathVariable("id") Long id) {
         Optional<HotelDTO> hotelOptional = hotelService.getHotelById(id);
         return hotelOptional.map(hotelDTO -> new ResponseEntity<>(hotelDTO, HttpStatus.OK))
-                            .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+                            .orElseGet(() -> new ResponseEntity<>(HttpStatus.NO_CONTENT));
     }
 
     @GetMapping
@@ -67,7 +67,7 @@ public class HotelController {
         if (hotels != null && !hotels.isEmpty()) {
             return new ResponseEntity<>(hotels, HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
     }
 
@@ -146,7 +146,7 @@ public class HotelController {
     ) {
         List<RoomAvailabilityResponse> availabilityMap = hotelService.getAvailabilityMapForMonth(hotelId, year, month);
         if (availabilityMap == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
         return new ResponseEntity<>(availabilityMap, HttpStatus.OK);
     }

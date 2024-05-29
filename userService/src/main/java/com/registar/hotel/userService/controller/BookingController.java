@@ -2,6 +2,7 @@ package com.registar.hotel.userService.controller;
 
 import com.registar.hotel.userService.model.BookingDTO;
 import com.registar.hotel.userService.model.BookingWithGuestsDTO;
+import com.registar.hotel.userService.model.response.BookingList;
 import com.registar.hotel.userService.model.response.BookingResponse;
 import com.registar.hotel.userService.service.BookingService;
 import com.registar.hotel.userService.service.GuestService;
@@ -13,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -45,6 +47,14 @@ public class BookingController {
     public ResponseEntity<List<BookingResponse>> getAllBookings() {
         List<BookingResponse> allBookings = bookingService.getAllBookings();
         return new ResponseEntity<>(allBookings, HttpStatus.OK);
+    }
+    @GetMapping("/hotel/{hotelId}/startDate/{startDate}/endDate/{endDate}")
+    public ResponseEntity<List<BookingList>> getAllBookingsByHotel(@PathVariable(name = "hotelId") long hotelId,
+                                                                   @PathVariable(name = "startDate") LocalDate startDate,
+                                                                   @PathVariable(name = "endDate") LocalDate endDate){
+        List<BookingList> bookingResponses = bookingService.getBookingByHotelIdAndDate(hotelId, startDate, endDate);
+        if (bookingResponses == null) return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(bookingResponses, HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")

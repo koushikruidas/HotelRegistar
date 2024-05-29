@@ -7,6 +7,7 @@ import com.registar.hotel.userService.model.BookingDTO;
 import com.registar.hotel.userService.model.BookingWithGuestsDTO;
 import com.registar.hotel.userService.model.GuestDTO;
 import com.registar.hotel.userService.model.RoomDTO;
+import com.registar.hotel.userService.model.response.BookingList;
 import com.registar.hotel.userService.model.response.BookingResponse;
 import com.registar.hotel.userService.repository.BookingRepository;
 import com.registar.hotel.userService.repository.GuestRepository;
@@ -237,6 +238,14 @@ public class BookingServiceImpl implements BookingService {
         List<Booking> bookings = bookingRepository.findAll();
         return bookings.stream()
                 .map(booking -> modelMapper.map(booking, BookingResponse.class))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<BookingList> getBookingByHotelIdAndDate(long hotelId, LocalDate startDate, LocalDate endDate) {
+        List<Booking> bookingByHotelId = bookingRepository.findBookingsByHotelIdAndDates(startDate, endDate, hotelId);
+        return bookingByHotelId.stream()
+                .map(booking -> modelMapper.map(booking,BookingList.class))
                 .collect(Collectors.toList());
     }
 
