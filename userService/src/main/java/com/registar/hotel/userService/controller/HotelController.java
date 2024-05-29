@@ -86,53 +86,37 @@ public class HotelController {
     }
 
     // Endpoint to add an employee to a hotel
-    @PostMapping("/{hotelId}/employees/{userId}")
-    public ResponseEntity<?> addEmployeeToHotel(@PathVariable Long hotelId, @PathVariable Long userId) {
+    @PutMapping("/{hotelId}/employees")
+    public ResponseEntity<?> updateHotelEmployees(@PathVariable Long hotelId, @RequestBody List<Long> userIds) {
         // Check if hotel exists
         Optional<Hotel> hotelOptional = hotelService.findById(hotelId);
         if (hotelOptional.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
-        // Check if user exists
-        Optional<User> userOptional = userService.findById(userId);
-        if (userOptional.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
         Hotel hotel = hotelOptional.get();
-        User user = userOptional.get();
 
-        // Add user as an employee to the hotel
-        hotel.getEmployees().add(user);
-        hotelService.save(hotel);
+        // Fetch all users by the provided IDs
+        List<User> users = userService.findAllByIds(userIds);
 
-        return ResponseEntity.ok().build();
-    }
+        // Get the current employees of the hotel
+        List<User> currentEmployees = hotel.getEmployees().stream().toList();
 
-    @DeleteMapping("/{hotelId}/employees/{userId}")
-    public ResponseEntity<?> removeEmployeeFromHotel(@PathVariable Long hotelId, @PathVariable Long userId) {
-        // Check if hotel exists
-        Optional<Hotel> hotelOptional = hotelService.findById(hotelId);
-        if (hotelOptional.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+        // Determine the employees to be added
+        List<User> employeesToAdd = users.stream()
+                .filter(user -> !currentEmployees.contains(user))
+                .toList();
 
-        // Check if user exists
-        Optional<User> userOptional = userService.findById(userId);
-        if (userOptional.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+        // Determine the employees to be removed
+        List<User> employeesToRemove = currentEmployees.stream()
+                .filter(user -> !users.contains(user))
+                .toList();
 
-        Hotel hotel = hotelOptional.get();
-        User user = userOptional.get();
+        // Update the hotel's employees list
+        employeesToRemove.forEach(hotel.getEmployees()::remove);
+        hotel.getEmployees().addAll(employeesToAdd);
 
-        // Remove user from the list of employees of the hotel
-        if (!hotel.getEmployees().remove(user)) {
-            return ResponseEntity.notFound().build(); // User was not found in the list of employees
-        }
-
-        // Save the updated hotel
+        // Save the updated hotel entity
         hotelService.save(hotel);
 
         return ResponseEntity.ok().build();
