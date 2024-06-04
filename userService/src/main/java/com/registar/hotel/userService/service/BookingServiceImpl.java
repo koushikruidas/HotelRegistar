@@ -244,9 +244,18 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public List<BookingList> getBookingByHotelIdAndDate(long hotelId, LocalDate startDate, LocalDate endDate) {
         List<Booking> bookingByHotelId = bookingRepository.findBookingsByHotelIdAndDates(startDate, endDate, hotelId);
-        return bookingByHotelId.stream()
+        List<BookingList> bookingLists = bookingByHotelId.stream()
                 .map(booking -> modelMapper.map(booking,BookingList.class))
-                .collect(Collectors.toList());
+                .toList();
+        List<List<Integer>> roomNos = bookingByHotelId.stream()
+                .map(booking -> booking.getBookedRooms()
+                        .stream().map(Room::getRoomNumber).toList()).toList();
+
+        for (int i = 0; i < bookingLists.size(); i++){
+            bookingLists.get(i).setRoomNo(roomNos.get(i).get(0));
+        }
+        return bookingLists;
+
     }
 
     @Override
