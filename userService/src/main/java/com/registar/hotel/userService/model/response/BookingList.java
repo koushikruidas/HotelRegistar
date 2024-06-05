@@ -17,4 +17,7 @@ public class BookingList {
     private List<GuestList> guests;
     private LocalDate checkInDate;
     private LocalDate checkOutDate;
+    private double bookingPrice;
+    private List<AdditionalServicesDTO> additionalServices;
+    private double totalPrice;
 }

@@ -7,8 +7,10 @@ import com.registar.hotel.userService.model.BookingDTO;
 import com.registar.hotel.userService.model.BookingWithGuestsDTO;
 import com.registar.hotel.userService.model.GuestDTO;
 import com.registar.hotel.userService.model.RoomDTO;
+import com.registar.hotel.userService.model.response.AdditionalServicesDTO;
 import com.registar.hotel.userService.model.response.BookingList;
 import com.registar.hotel.userService.model.response.BookingResponse;
+import com.registar.hotel.userService.repository.AdditionalServicesRepository;
 import com.registar.hotel.userService.repository.BookingRepository;
 import com.registar.hotel.userService.repository.GuestRepository;
 import com.registar.hotel.userService.repository.RoomRepository;
@@ -41,6 +43,8 @@ public class BookingServiceImpl implements BookingService {
     private S3Service s3Service;
     @Autowired
     private ModelMapper modelMapper;
+    @Autowired
+    private AdditionalServicesRepository additionalServiceRepository;
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -246,7 +250,17 @@ public class BookingServiceImpl implements BookingService {
         List<Booking> bookings = bookingRepository.findBookingsByHotelIdAndDates(startDate, endDate, hotelId);
         return bookings.stream()
                 .map(booking -> {
+                    List<AdditionalServices> services = additionalServiceRepository.findByBookings_Id(booking.getId());
+                    List<AdditionalServicesDTO> servicesDTOS = services.stream()
+                            .map(service -> modelMapper.map(service, AdditionalServicesDTO.class)).toList();
+
+                    double additionalServicesCost = services.stream().mapToDouble(AdditionalServices::getCost).sum();
+                    double totalCost = booking.getTotalPrice() + additionalServicesCost;
+
                     BookingList bookingList = modelMapper.map(booking, BookingList.class);
+                    bookingList.setAdditionalServices(servicesDTOS);
+                    bookingList.setBookingPrice(booking.getTotalPrice());
+                    bookingList.setTotalPrice(totalCost);
                     if (booking.getBookedRooms() != null && !booking.getBookedRooms().isEmpty()) {
                         Integer roomNumber = booking.getBookedRooms().stream()
                                 .map(Room::getRoomNumber)
