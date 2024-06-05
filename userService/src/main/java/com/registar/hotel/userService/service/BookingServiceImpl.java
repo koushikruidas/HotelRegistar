@@ -249,28 +249,38 @@ public class BookingServiceImpl implements BookingService {
     public List<BookingList> getBookingByHotelIdAndDate(long hotelId, LocalDate startDate, LocalDate endDate) {
         List<Booking> bookings = bookingRepository.findBookingsByHotelIdAndDates(startDate, endDate, hotelId);
         return bookings.stream()
-                .map(booking -> {
-                    List<AdditionalServices> services = additionalServiceRepository.findByBookings_Id(booking.getId());
-                    List<AdditionalServicesDTO> servicesDTOS = services.stream()
-                            .map(service -> modelMapper.map(service, AdditionalServicesDTO.class)).toList();
-
-                    double additionalServicesCost = services.stream().mapToDouble(AdditionalServices::getCost).sum();
-                    double totalCost = booking.getTotalPrice() + additionalServicesCost;
-
-                    BookingList bookingList = modelMapper.map(booking, BookingList.class);
-                    bookingList.setAdditionalServices(servicesDTOS);
-                    bookingList.setBookingPrice(booking.getTotalPrice());
-                    bookingList.setTotalPrice(totalCost);
-                    if (booking.getBookedRooms() != null && !booking.getBookedRooms().isEmpty()) {
-                        Integer roomNumber = booking.getBookedRooms().stream()
-                                .map(Room::getRoomNumber)
-                                .findFirst()
-                                .orElse(null);
-                        bookingList.setRoomNo(roomNumber);
-                    }
-                    return bookingList;
-                })
+                .map(this::convertToBookingList)
                 .toList();
+    }
+
+    private BookingList convertToBookingList(Booking booking) {
+        List<AdditionalServicesDTO> servicesDTOS = getAdditionalServicesDTOs(booking);
+        double additionalServicesCost = servicesDTOS.stream()
+                .mapToDouble(AdditionalServicesDTO::getCost)
+                .sum();
+        double totalCost = booking.getTotalPrice() + additionalServicesCost;
+
+        BookingList bookingList = modelMapper.map(booking, BookingList.class);
+        bookingList.setAdditionalServices(servicesDTOS);
+        bookingList.setBookingPrice(booking.getTotalPrice());
+        bookingList.setTotalPrice(totalCost);
+        bookingList.setRoomNo(getRoomNumber(booking));
+
+        return bookingList;
+    }
+
+    private List<AdditionalServicesDTO> getAdditionalServicesDTOs(Booking booking) {
+        return additionalServiceRepository.findByBookings_Id(booking.getId()).stream()
+                .map(service -> modelMapper.map(service, AdditionalServicesDTO.class))
+                .toList();
+    }
+
+    private Integer getRoomNumber(Booking booking) {
+        return booking.getBookedRooms() != null && !booking.getBookedRooms().isEmpty() ?
+                booking.getBookedRooms().stream()
+                        .map(Room::getRoomNumber)
+                        .findFirst()
+                        .orElse(null) : null;
     }
 
     @Override
