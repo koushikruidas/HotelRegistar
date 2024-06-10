@@ -20,6 +20,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -27,40 +30,57 @@ import java.util.concurrent.ExecutionException;
 @RestController
 @RequestMapping("/file")
 public class FileUploadController {
-
-    private FileUploadService fileUploadService;
-    private GuestService guestService;
-    private S3Service s3Service;
+    private final GuestService guestService;
+    private final S3Service s3Service;
 
     @Autowired
     private ModelMapper modelMapper;
 
     @Autowired
-    public FileUploadController(FileUploadService fileUploadService, GuestService guestService, S3Service s3Service) {
-        this.fileUploadService = fileUploadService;
+    public FileUploadController(GuestService guestService, S3Service s3Service) {
         this.guestService = guestService;
         this.s3Service = s3Service;
     }
 
     @GetMapping("/download/govtId/{guestId}")
-    public ResponseEntity<byte[]> downloadFile(@PathVariable int guestId) {
+    public ResponseEntity<byte[]> downloadGovtId(@PathVariable int guestId) {
         Optional<GuestDTO> guestDTO = guestService.getGuestById(guestId);
         Guest guest = modelMapper.map(guestDTO, Guest.class);
         if (guest.getPictureFilePath() != null) {
             try {
                 // Generate a pre-signed URL for the file with a short expiration time
-                URL presignedUrl = s3Service.getPresignedUrl(guest.getGovtIDFilePath());
-
-                // Use the pre-signed URL to download the file
-                RestTemplate restTemplate = new RestTemplate();
-                ResponseEntity<byte[]> response = restTemplate.exchange(presignedUrl.toURI(), HttpMethod.GET, null, byte[].class);
-                // Determine content type based on file extension
+                byte[] fileFromS3 = s3Service.getFileFromS3(guest.getGovtIDFilePath());
+                // Determine the content type based on the file extension
                 String contentType = URLConnection.guessContentTypeFromName(guest.getGovtIDFilePath());
 
                 return ResponseEntity
                         .ok()
                         .contentType(MediaType.parseMediaType(contentType))
-                        .body(response.getBody());
+                        .body(fileFromS3);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @GetMapping("/download/picture/{guestId}")
+    public ResponseEntity<byte[]> downloadPicture(@PathVariable int guestId) {
+        Optional<GuestDTO> guestDTO = guestService.getGuestById(guestId);
+        Guest guest = modelMapper.map(guestDTO, Guest.class);
+        if (guest.getPictureFilePath() != null) {
+            try {
+                // Generate a pre-signed URL for the file with a short expiration time
+                byte[] fileFromS3 = s3Service.getFileFromS3(guest.getPictureFilePath());
+                // Determine the content type based on the file extension
+                String contentType = URLConnection.guessContentTypeFromName(guest.getPictureFilePath());
+
+                return ResponseEntity
+                        .ok()
+                        .contentType(MediaType.parseMediaType(contentType))
+                        .body(fileFromS3);
             } catch (Exception e) {
                 e.printStackTrace();
                 return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);

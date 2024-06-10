@@ -1,19 +1,19 @@
 package com.registar.hotel.userService.service;
 
 import com.registar.hotel.userService.exception.GuestNotFoundException;
-import com.registar.hotel.userService.model.GuestDTO;
+import com.registar.hotel.userService.model.GuestDTO;;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.GetUrlRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectResponse;
+import software.amazon.awssdk.services.s3.model.*;
+import software.amazon.awssdk.utils.IoUtils;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -72,7 +72,7 @@ public class S3Service {
         }
     }
 
-    public URL getPresignedUrl(String keyName) {
+    public byte[] getFileFromS3(String keyName) {
         AwsBasicCredentials awsCredentials = AwsBasicCredentials.create(accessKey, secretKey);
 
         try (S3Client s3Client = S3Client.builder()
@@ -80,18 +80,15 @@ public class S3Service {
                 .credentialsProvider(StaticCredentialsProvider.create(awsCredentials))
                 .build()) {
 
-            // Generate a pre-signed URL with a short expiration time
-            GetUrlRequest getUrlRequest = GetUrlRequest.builder()
+            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                     .bucket(bucketName)
                     .key(keyName)
                     .build();
 
-            try {
-                return s3Client.utilities().getUrl(getUrlRequest).toURI().toURL();
-            } catch (MalformedURLException e) {
-                throw new RuntimeException(e);
-            } catch (URISyntaxException e) {
-                throw new RuntimeException(e);
+            try (ResponseInputStream<GetObjectResponse> objectResponseInputStream = s3Client.getObject(getObjectRequest)) {
+                return objectResponseInputStream.readAllBytes();
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to read file from S3", e);
             }
         }
     }
