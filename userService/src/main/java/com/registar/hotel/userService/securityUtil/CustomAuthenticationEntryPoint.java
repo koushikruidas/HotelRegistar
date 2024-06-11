@@ -13,6 +13,6 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, IOException {
-        response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access Denied");
+        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Access Denied");
     }
 }
