@@ -34,7 +34,7 @@ public class GuestServiceImpl implements GuestService {
     }
 
     @Override
-    public Optional<GuestDTO> getGuestById(int id) {
+    public Optional<GuestDTO> getGuestById(long id) {
         Optional<Guest> guestOptional = guestRepository.findById(id);
         return guestOptional.map(i -> modelMapper.map(i,GuestDTO.class));
     }
@@ -61,7 +61,7 @@ public class GuestServiceImpl implements GuestService {
     }
 
     @Override
-    public void deleteGuest(int id) {
+    public void deleteGuest(long id) {
         guestRepository.deleteById(id);
     }
 

@@ -17,7 +17,7 @@ import java.util.List;
 public class Guest {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private long id;
     private String name;
     private String mobileNo;
     private String govtIDFilePath; // File path for government IDs

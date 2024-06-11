@@ -6,7 +6,7 @@ import lombok.Data;
 
 @Data
 public class GuestDTO {
-    private int id;
+    private long id;
 
     @NotEmpty(message = "name cannot be empty.")
     private String name;

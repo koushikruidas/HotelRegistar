@@ -9,11 +9,11 @@ import java.util.Optional;
 public interface GuestService {
     GuestDTO saveGuest(GuestDTO guestDTO);
     List<GuestDTO> saveAll(List<GuestDTO> guestDTOS);
-    Optional<GuestDTO> getGuestById(int id);
+    Optional<GuestDTO> getGuestById(long id);
     Optional<List<GuestDTO>> getGuestByMobileNo(String mobileNo);
     Optional<List<GuestDTO>> getGuestByName(String name);
     List<GuestDTO> getAllGuests();
-    void deleteGuest(int id);
+    void deleteGuest(long id);
     void update(GuestDTO guestDTO);
     Optional<Guest> findByNameAndMobile(String name, String mobile);
 }

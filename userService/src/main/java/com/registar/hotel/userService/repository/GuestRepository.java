@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Repository
-public interface GuestRepository extends JpaRepository<Guest, Integer> {
+public interface GuestRepository extends JpaRepository<Guest, Long> {
     Optional<List<Guest>> findByMobileNo(String mobileNo);
     Optional<List<Guest>> findByName(String name);
     // Method to retrieve a single guest by name and mobile number (composite unique key)

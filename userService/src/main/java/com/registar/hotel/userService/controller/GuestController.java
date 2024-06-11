@@ -25,7 +25,7 @@ public class GuestController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<GuestDTO> getGuestById(@PathVariable("id") int id) {
+    public ResponseEntity<GuestDTO> getGuestById(@PathVariable("id") long id) {
         Optional<GuestDTO> guestOptional = guestService.getGuestById(id);
         return guestOptional.map(guestDTO -> new ResponseEntity<>(guestDTO, HttpStatus.OK))
                             .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
@@ -38,7 +38,7 @@ public class GuestController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteGuest(@PathVariable("id") int id) {
+    public ResponseEntity<Void> deleteGuest(@PathVariable("id") long id) {
         guestService.deleteGuest(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }

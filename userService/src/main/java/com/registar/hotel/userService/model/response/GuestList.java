@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class GuestList {
+    private long id;
     private String name;
     private String mobileNo;
 }
