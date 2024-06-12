@@ -13,7 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 public class BookingList {
     private long id;
-    private int roomNo;
+    private String roomNo;
     private List<GuestList> guests;
     private LocalDate checkInDate;
     private LocalDate checkOutDate;

@@ -10,7 +10,7 @@ import java.util.Map;
 
 @Data
 public class CreateRoomRequest {
-    private int roomNumber;
+    private String roomNumber;
     private RoomType type;
     private String customType;
     private double pricePerNight;

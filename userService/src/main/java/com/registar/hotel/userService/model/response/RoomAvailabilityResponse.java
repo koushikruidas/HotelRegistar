@@ -9,7 +9,7 @@ import java.util.List;
 @Data
 public class RoomAvailabilityResponse {
     private long id;
-    private int roomNumber;
+    private String roomNumber;
     private RoomType type;
     private String customType;
     private long hotelId;

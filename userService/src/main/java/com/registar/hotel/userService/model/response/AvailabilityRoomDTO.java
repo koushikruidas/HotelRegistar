@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class AvailabilityRoomDTO {
     private Long Id;
-    private int roomNumber;
+    private String roomNumber;
     private RoomType type;
     private String customType;
     private double pricePerNight;

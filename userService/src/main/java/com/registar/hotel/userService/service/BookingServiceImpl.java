@@ -275,7 +275,7 @@ public class BookingServiceImpl implements BookingService {
                 .toList();
     }
 
-    private Integer getRoomNumber(Booking booking) {
+    private String getRoomNumber(Booking booking) {
         return booking.getBookedRooms() != null && !booking.getBookedRooms().isEmpty() ?
                 booking.getBookedRooms().stream()
                         .map(Room::getRoomNumber)
