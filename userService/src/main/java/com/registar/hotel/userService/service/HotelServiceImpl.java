@@ -4,6 +4,9 @@ import com.registar.hotel.userService.entity.*;
 import com.registar.hotel.userService.exception.ResourceNotFoundException;
 import com.registar.hotel.userService.model.CreateHotelRequest;
 import com.registar.hotel.userService.model.HotelDTO;
+import com.registar.hotel.userService.model.RoomDTO;
+import com.registar.hotel.userService.model.UserDTO;
+import com.registar.hotel.userService.model.request.AddressDTO;
 import com.registar.hotel.userService.model.response.HotelResponse;
 import com.registar.hotel.userService.model.response.RoomAvailabilityResponse;
 import com.registar.hotel.userService.repository.AddressRepository;
@@ -134,34 +137,71 @@ public class HotelServiceImpl implements HotelService {
     @Override
     @Transactional
     public Optional<HotelDTO> updateHotel(Long hotelId, CreateHotelRequest hotelRequest) {
-        Optional<Hotel> optionalHotel = hotelRepository.findById(hotelId);
-        List<User> employees = userRepository.findByIds(hotelRequest.getEmployeeIds());
-
-        if (optionalHotel.isPresent()) {
-            Hotel hotel = getHotel(hotelRequest, optionalHotel.get(), employees);
-
-            Hotel updatedHotel = hotelRepository.save(hotel);
-            HotelDTO dto = modelMapper.map(updatedHotel, HotelDTO.class);
-            return Optional.of(dto);
+        // Retrieve the existing hotel
+        Optional<Hotel> existingHotelOptional = hotelRepository.findById(hotelId);
+        if (existingHotelOptional.isEmpty()) {
+            return Optional.empty();
         }
-        return Optional.empty();
-    }
 
-    private Hotel getHotel(CreateHotelRequest hotelRequest, Hotel hotel, List<User> employees) {
-        String newName = hotelRequest.getName();
-        Address newAddress = modelMapper.map(hotelRequest.getAddress(),Address.class);
-        Set<User> empSet = new HashSet<>(employees);
+        Hotel existingHotel = existingHotelOptional.get();
 
-        if (!newName.isEmpty() && !newName.isBlank()){
-            hotel.setName(newName);
+        // Update hotel name
+        if (!hotelRequest.getName().isEmpty() && !hotelRequest.getName().isBlank()) {
+            existingHotel.setName(hotelRequest.getName());
         }
-        if (newAddress != null){
-            hotel.setAddress(newAddress);
+
+        // Update address
+        AddressDTO addressDTO = hotelRequest.getAddress();
+        if (addressDTO != null) {
+            Address address = existingHotel.getAddress();
+            if (address == null) {
+                address = new Address();
+                existingHotel.setAddress(address);
+            }
+            address.setStreet(addressDTO.getStreet());
+            address.setCity(addressDTO.getCity());
+            address.setState(addressDTO.getState());
+            address.setZipCode(addressDTO.getZipCode());
+            address.setCountry(addressDTO.getCountry());
         }
-        if (!employees.isEmpty()){
-            hotel.setEmployees(empSet);
+
+        if (hotelRequest.getPhoneNumbers() != null) {
+            // Update phone numbers
+            List<PhoneNumber> newPhoneNumbers = hotelRequest.getPhoneNumbers().stream()
+                    .map(number ->
+                            PhoneNumber.builder()
+                                    .number(number)
+                                    .hotel(existingHotel)
+                                    .build()
+                    )
+                    .toList();
+
+            existingHotel.getPhoneNumbers().clear();
+            existingHotel.getPhoneNumbers().addAll(newPhoneNumbers);
         }
-        return hotel;
+
+        if (!hotelRequest.getGstNumber().isEmpty() && !hotelRequest.getGstNumber().isBlank()) {
+            // Update GST number
+            existingHotel.setGstNumber(hotelRequest.getGstNumber());
+        }
+
+        // Update employees
+        if (hotelRequest.getEmployeeIds() != null) {
+            Set<User> employees = hotelRequest.getEmployeeIds().stream()
+                    .map(userRepository::findById)
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .collect(Collectors.toSet());
+            existingHotel.setEmployees(employees);
+        }
+
+        // Save updated hotel
+        Hotel updatedHotel = hotelRepository.save(existingHotel);
+
+        // Convert updated hotel to HotelDTO
+        HotelDTO updatedHotelDTO = modelMapper.map(updatedHotel, HotelDTO.class);
+
+        return Optional.of(updatedHotelDTO);
     }
 
     @Override
