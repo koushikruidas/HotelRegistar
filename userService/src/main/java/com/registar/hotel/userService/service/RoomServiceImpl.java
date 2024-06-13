@@ -9,6 +9,7 @@ import com.registar.hotel.userService.repository.RoomRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -65,5 +66,11 @@ public class RoomServiceImpl implements RoomService {
         room.setPricePerNight(roomRequest.getPricePerNight());
 
         return roomRepository.save(room);
+    }
+
+    @Override
+    @Transactional
+    public void saveAllRooms(List<Room> rooms) {
+        roomRepository.saveAll(rooms);
     }
 }

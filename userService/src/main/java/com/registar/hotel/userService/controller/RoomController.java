@@ -51,21 +51,31 @@ public class RoomController {
 
     @PostMapping("/{hotelId}")
     public ResponseEntity<HotelDTO> addRooms(@PathVariable("hotelId") Long hotelId,
-                                             @RequestBody List<CreateRoomRequest> rooms){
-        Optional<HotelDTO> hotelOptional = hotelService.getHotelById(hotelId);
+                                             @RequestBody List<CreateRoomRequest> rooms) {
+        Optional<Hotel> hotelOptional = hotelService.findById(hotelId);
         if (hotelOptional.isPresent()) {
-            HotelDTO hotelDTO = hotelOptional.get();
+            Hotel hotel = hotelOptional.get();
 
-            // changing the list to RoomDTO types
-            List<RoomDTO> roomsDto = rooms.stream()
-                    .map(room -> {
-                        Room createdRoom = roomService.createRoom(room);
-                        createdRoom.setHotel(modelMapper.map(hotelDTO, Hotel.class));
-                        return modelMapper.map(createdRoom, RoomDTO.class);
-                    }).toList();
+            // Map and create Room entities from request DTOs
+            List<Room> newRooms = rooms.stream()
+                    .map(roomRequest -> {
+                        Room room = modelMapper.map(roomRequest, Room.class);
+                        room.setHotel(hotel); // Set the relationship
+                        return room;
+                    }).collect(Collectors.toList());
 
-            hotelDTO.setRooms(roomsDto);
-            hotelService.saveHotel(hotelDTO);
+            // Add new rooms to the hotel's current list of rooms
+            if (hotel.getRooms() == null) {
+                hotel.setRooms(newRooms);
+            } else {
+                hotel.getRooms().addAll(newRooms);
+            }
+
+            // Save new rooms directly
+            roomService.saveAllRooms(newRooms);
+
+            // Fetch the updated hotel entity and map to DTO
+            HotelDTO hotelDTO = modelMapper.map(hotel, HotelDTO.class);
             return ResponseEntity.ok(hotelDTO);
         } else {
             return ResponseEntity.notFound().build();

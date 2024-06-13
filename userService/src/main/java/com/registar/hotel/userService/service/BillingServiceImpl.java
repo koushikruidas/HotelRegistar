@@ -28,14 +28,16 @@ public class BillingServiceImpl implements BillingService {
     private final BookingRepository bookingRepository;
     private final ModelMapper modelMapper;
     private final AdditionalServicesRepository additionalServiceRepository;
+    private final HotelRepository hotelRepository;
 
     @Autowired
     public BillingServiceImpl(BookingRepository bookingRepository,
                               AdditionalServicesRepository additionalServiceRepository,
-                              ModelMapper modelMapper) {
+                              ModelMapper modelMapper, HotelRepository hotelRepository) {
         this.bookingRepository = bookingRepository;
         this.additionalServiceRepository = additionalServiceRepository;
         this.modelMapper = modelMapper;
+        this.hotelRepository = hotelRepository;
     }
 
     @Override
@@ -48,7 +50,8 @@ public class BillingServiceImpl implements BillingService {
         Booking booking = bookingOptional.get();
         List<Guest> guests = booking.getGuests();
         List<Room> rooms = booking.getBookedRooms();
-        Hotel hotel = rooms.get(0).getHotel();
+//        Hotel hotel = rooms.get(0).getHotel();
+        Hotel hotel = hotelRepository.findById(rooms.get(0).getHotel().getId()).get();
         List<AdditionalServices> services = additionalServiceRepository.findByBookings_Id(bookingId);
 
         double additionalServicesCost = services.stream().mapToDouble(AdditionalServices::getCost).sum();
@@ -56,6 +59,7 @@ public class BillingServiceImpl implements BillingService {
 
         List<String> guestNames = guests.stream().map(Guest::getName).collect(Collectors.toList());
         List<String> guestMobileNos = guests.stream().map(Guest::getMobileNo).collect(Collectors.toList());
+        List<PhoneNumber> phoneNumberList = hotel.getPhoneNumbers();
         List<String> hotelPhoneNos = hotel.getPhoneNumbers().stream().map(PhoneNumber::getNumber).toList();
 
         List<RoomDTO> roomDTOs = rooms.stream().map(room -> modelMapper.map(room, RoomDTO.class))

@@ -15,6 +15,7 @@ import java.util.List;
 public class HotelDTO {
     private Long id;
     private String name;
+    private String gstNumber;
     private String address;
     private List<String> phoneNumbers;
     private UserDTO owner;

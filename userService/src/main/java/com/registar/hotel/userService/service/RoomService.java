@@ -16,4 +16,5 @@ public interface RoomService {
     List<AvailabilityRoomDTO> getAllRooms(Long id);
     List<RoomDTO> getAvailableRoomsForDateRange(LocalDate startDate, LocalDate endDate, List<Long> hotelIds);
     void deleteRoom(Long id);
+    void saveAllRooms(List<Room> rooms);
 }
