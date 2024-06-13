@@ -1,14 +1,12 @@
 package com.registar.hotel.userService.service;
 
-import com.registar.hotel.userService.entity.Hotel;
-import com.registar.hotel.userService.entity.PhoneNumber;
-import com.registar.hotel.userService.entity.Room;
-import com.registar.hotel.userService.entity.User;
+import com.registar.hotel.userService.entity.*;
 import com.registar.hotel.userService.exception.ResourceNotFoundException;
 import com.registar.hotel.userService.model.CreateHotelRequest;
 import com.registar.hotel.userService.model.HotelDTO;
 import com.registar.hotel.userService.model.response.HotelResponse;
 import com.registar.hotel.userService.model.response.RoomAvailabilityResponse;
+import com.registar.hotel.userService.repository.AddressRepository;
 import com.registar.hotel.userService.repository.HotelRepository;
 import com.registar.hotel.userService.repository.UserRepository;
 import org.modelmapper.ModelMapper;
@@ -27,16 +25,20 @@ import java.util.stream.Collectors;
 
 @Service
 public class HotelServiceImpl implements HotelService {
-
-    @Autowired
-    private HotelRepository hotelRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private ModelMapper modelMapper;
-
+    private final HotelRepository hotelRepository;
+    private final UserRepository userRepository;
+    private final ModelMapper modelMapper;
+    private final AddressRepository addressRepository;
     private static final Logger logger = LoggerFactory.getLogger(HotelServiceImpl.class);
+
+    @Autowired
+    public HotelServiceImpl(HotelRepository hotelRepository, UserRepository userRepository, ModelMapper modelMapper, AddressRepository addressRepository) {
+        this.hotelRepository = hotelRepository;
+        this.userRepository = userRepository;
+        this.modelMapper = modelMapper;
+        this.addressRepository = addressRepository;
+    }
+
     @Override
     @Transactional
     public HotelDTO saveHotel(CreateHotelRequest hotelRequest) {
@@ -52,6 +54,11 @@ public class HotelServiceImpl implements HotelService {
 
         List<User> employees = userRepository.findByIds(hotelRequest.getEmployeeIds());
         Hotel hotel = modelMapper.map(hotelRequest, Hotel.class);
+
+        Address address = modelMapper.map(hotelRequest.getAddress(), Address.class);
+        // Save the Address entity first
+        Address savedAddress = addressRepository.save(address);
+
         List<PhoneNumber> phoneNumbers = hotelRequest.getPhoneNumbers().stream().map(number -> {
             PhoneNumber phoneNumber = new PhoneNumber();
             phoneNumber.setNumber(number);
@@ -61,6 +68,8 @@ public class HotelServiceImpl implements HotelService {
         hotel.setPhoneNumbers(phoneNumbers);
         hotel.setEmployees(new HashSet<>(employees));
         hotel.setOwner(owner.get());
+        hotel.setAddress(savedAddress);
+        address.setHotel(hotel);
         Hotel updated = hotelRepository.save(hotel);
         HotelDTO hotelDTO = modelMapper.map(updated, HotelDTO.class);
         hotelDTO.setPhoneNumbers(updated.getPhoneNumbers().stream()
@@ -86,9 +95,7 @@ public class HotelServiceImpl implements HotelService {
     @Transactional
     public List<HotelResponse> getAllHotelsByOwner(String username) {
         Optional<User> user = userRepository.findByEmail(username);
-        user.ifPresent(i -> {
-            hotelRepository.findByOwner(i);
-        });
+        user.ifPresent(hotelRepository::findByOwner);
         if (user.isPresent()){
             List<Hotel> hotels = hotelRepository.findByOwner(user.get());
             return hotels.stream()
@@ -131,26 +138,30 @@ public class HotelServiceImpl implements HotelService {
         List<User> employees = userRepository.findByIds(hotelRequest.getEmployeeIds());
 
         if (optionalHotel.isPresent()) {
-            Hotel hotel = optionalHotel.get();
-            String newName = hotelRequest.getName();
-            String newAddress = hotelRequest.getAddress();
-            Set<User> empSet = new HashSet<>(employees);
-
-            if (!newName.isEmpty() && !newName.isBlank()){
-                hotel.setName(newName);
-            }
-            if (!newAddress.isEmpty() && !newAddress.isBlank()){
-                hotel.setAddress(newAddress);
-            }
-            if (!employees.isEmpty()){
-                hotel.setEmployees(empSet);
-            }
+            Hotel hotel = getHotel(hotelRequest, optionalHotel.get(), employees);
 
             Hotel updatedHotel = hotelRepository.save(hotel);
             HotelDTO dto = modelMapper.map(updatedHotel, HotelDTO.class);
             return Optional.of(dto);
         }
         return Optional.empty();
+    }
+
+    private Hotel getHotel(CreateHotelRequest hotelRequest, Hotel hotel, List<User> employees) {
+        String newName = hotelRequest.getName();
+        Address newAddress = modelMapper.map(hotelRequest.getAddress(),Address.class);
+        Set<User> empSet = new HashSet<>(employees);
+
+        if (!newName.isEmpty() && !newName.isBlank()){
+            hotel.setName(newName);
+        }
+        if (newAddress != null){
+            hotel.setAddress(newAddress);
+        }
+        if (!employees.isEmpty()){
+            hotel.setEmployees(empSet);
+        }
+        return hotel;
     }
 
     @Override

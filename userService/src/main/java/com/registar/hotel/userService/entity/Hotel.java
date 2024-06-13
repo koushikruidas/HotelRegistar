@@ -22,7 +22,9 @@ public class Hotel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
-    private String address;
+    @OneToOne
+    @JoinColumn(name = "address_id", referencedColumnName = "id")
+    private Address address;
 
     @OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PhoneNumber> phoneNumbers;

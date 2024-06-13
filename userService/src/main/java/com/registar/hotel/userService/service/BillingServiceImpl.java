@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -50,8 +51,9 @@ public class BillingServiceImpl implements BillingService {
         Booking booking = bookingOptional.get();
         List<Guest> guests = booking.getGuests();
         List<Room> rooms = booking.getBookedRooms();
-//        Hotel hotel = rooms.get(0).getHotel();
-        Hotel hotel = hotelRepository.findById(rooms.get(0).getHotel().getId()).get();
+        Hotel hotel = rooms.get(0).getHotel();
+//        Hotel hotel = hotelRepository.findById(rooms.get(0).getHotel().getId()).get();
+
         List<AdditionalServices> services = additionalServiceRepository.findByBookings_Id(bookingId);
 
         double additionalServicesCost = services.stream().mapToDouble(AdditionalServices::getCost).sum();
@@ -59,7 +61,6 @@ public class BillingServiceImpl implements BillingService {
 
         List<String> guestNames = guests.stream().map(Guest::getName).collect(Collectors.toList());
         List<String> guestMobileNos = guests.stream().map(Guest::getMobileNo).collect(Collectors.toList());
-        List<PhoneNumber> phoneNumberList = hotel.getPhoneNumbers();
         List<String> hotelPhoneNos = hotel.getPhoneNumbers().stream().map(PhoneNumber::getNumber).toList();
 
         List<RoomDTO> roomDTOs = rooms.stream().map(room -> modelMapper.map(room, RoomDTO.class))
@@ -72,7 +73,10 @@ public class BillingServiceImpl implements BillingService {
                 .phoneNumbers(hotelPhoneNos)
                 .guestName(guestNames)
                 .guestMobileNo(guestMobileNos)
+                .checkInDate(booking.getCheckInDate())
+                .checkOutDate(booking.getCheckOutDate())
                 .rooms(roomDTOs)
+                .numberOfNights(ChronoUnit.DAYS.between(booking.getCheckInDate(),booking.getCheckOutDate()))
                 .totalCost(totalCost)
                 .build();
 
@@ -110,7 +114,10 @@ public class BillingServiceImpl implements BillingService {
             Paragraph leftParagraph = new Paragraph();
             leftParagraph.add(new Phrase("Address:\n", new Font(Font.FontFamily.HELVETICA, 11, Font.BOLD)));
             // Wrap the address for better presentation
-            leftParagraph.add(new Phrase(billDTO.getAddress()+"\n", new Font(Font.FontFamily.HELVETICA, 11)));
+            leftParagraph.add(new Phrase(billDTO.getAddress().getStreet()+", "+billDTO.getAddress().getCity()+"\n", new Font(Font.FontFamily.HELVETICA, 11)));
+            leftParagraph.add(new Phrase(billDTO.getAddress().getState()+" - "+billDTO.getAddress().getZipCode()+"\n", new Font(Font.FontFamily.HELVETICA, 11)));
+            leftParagraph.add(new Phrase(billDTO.getAddress().getCountry()+"\n", new Font(Font.FontFamily.HELVETICA, 11)));
+
             leftParagraph.add(new Phrase("Phone Numbers:\n", new Font(Font.FontFamily.HELVETICA, 11, Font.BOLD)));
             for (String phoneNumber : billDTO.getPhoneNumbers()) {
                 leftParagraph.add(new Phrase(phoneNumber + "\n", new Font(Font.FontFamily.HELVETICA, 11)));
@@ -119,7 +126,7 @@ public class BillingServiceImpl implements BillingService {
             leftCell.addElement(leftParagraph);
             headerTable.addCell(leftCell);
 
-// GSTIN on the right side
+            // GSTIN on the right side
             PdfPCell rightCell = new PdfPCell(new Phrase("GSTIN :"+billDTO.getGstin(), new Font(Font.FontFamily.HELVETICA, 11, Font.BOLD)));
             rightCell.setBorder(Rectangle.NO_BORDER);
             rightCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
@@ -132,16 +139,20 @@ public class BillingServiceImpl implements BillingService {
             document.add(Chunk.NEWLINE); // Add a newline for spacing
 
             // Guest details in table with bold headers
-            PdfPTable guestTable = new PdfPTable(2);
+            PdfPTable guestTable = new PdfPTable(4);
             guestTable.setWidthPercentage(100);
             guestTable.setSpacingBefore(10f);
             guestTable.setSpacingAfter(10f);
             guestTable.addCell(new PdfPCell(new Phrase("Guest Name", new Font(Font.FontFamily.HELVETICA, 11, Font.BOLD))));
             guestTable.addCell(new PdfPCell(new Phrase("Mobile No", new Font(Font.FontFamily.HELVETICA, 11, Font.BOLD))));
+            guestTable.addCell(new PdfPCell(new Phrase("Check-in Date", new Font(Font.FontFamily.HELVETICA, 11, Font.BOLD))));
+            guestTable.addCell(new PdfPCell(new Phrase("Check-out Date", new Font(Font.FontFamily.HELVETICA, 11, Font.BOLD))));
 
             for (int i = 0; i < billDTO.getGuestName().size(); i++) {
                 guestTable.addCell(new PdfPCell(new Phrase(billDTO.getGuestName().get(i), new Font(Font.FontFamily.HELVETICA, 11))));
                 guestTable.addCell(new PdfPCell(new Phrase(billDTO.getGuestMobileNo().get(i), new Font(Font.FontFamily.HELVETICA, 11))));
+                guestTable.addCell(new PdfPCell(new Phrase(String.valueOf(billDTO.getCheckInDate()), new Font(Font.FontFamily.HELVETICA, 11))));
+                guestTable.addCell(new PdfPCell(new Phrase(String.valueOf(billDTO.getCheckOutDate()), new Font(Font.FontFamily.HELVETICA, 11))));
             }
             document.add(guestTable);
 
@@ -159,7 +170,7 @@ public class BillingServiceImpl implements BillingService {
             for (RoomDTO room : billDTO.getRooms()) {
                 roomTable.addCell(new PdfPCell(new Phrase(String.valueOf(room.getRoomNumber()), new Font(Font.FontFamily.HELVETICA, 11))));
                 roomTable.addCell(new PdfPCell(new Phrase(room.getType().name(), new Font(Font.FontFamily.HELVETICA, 11))));
-                PdfPCell priceCell = new PdfPCell(new Phrase(String.valueOf(room.getPricePerNight()), new Font(Font.FontFamily.HELVETICA, 11)));
+                PdfPCell priceCell = new PdfPCell(new Phrase(room.getPricePerNight()+" X "+billDTO.getNumberOfNights()+"(Nights) = "+billDTO.getTotalCost(), new Font(Font.FontFamily.HELVETICA, 11)));
                 priceCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
                 roomTable.addCell(priceCell);
             }
