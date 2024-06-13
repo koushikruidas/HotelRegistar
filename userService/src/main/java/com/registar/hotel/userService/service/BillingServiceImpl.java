@@ -170,7 +170,7 @@ public class BillingServiceImpl implements BillingService {
             for (RoomDTO room : billDTO.getRooms()) {
                 roomTable.addCell(new PdfPCell(new Phrase(String.valueOf(room.getRoomNumber()), new Font(Font.FontFamily.HELVETICA, 11))));
                 roomTable.addCell(new PdfPCell(new Phrase(room.getType().name(), new Font(Font.FontFamily.HELVETICA, 11))));
-                PdfPCell priceCell = new PdfPCell(new Phrase(room.getPricePerNight()+" X "+billDTO.getNumberOfNights()+"(Nights) = "+billDTO.getTotalCost(), new Font(Font.FontFamily.HELVETICA, 11)));
+                PdfPCell priceCell = new PdfPCell(new Phrase(room.getPricePerNight()+" X "+billDTO.getNumberOfNights()+"(Nights) = "+billDTO.getNumberOfNights()*room.getPricePerNight(), new Font(Font.FontFamily.HELVETICA, 11)));
                 priceCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
                 roomTable.addCell(priceCell);
             }
