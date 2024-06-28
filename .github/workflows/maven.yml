@@ -19,9 +19,6 @@ jobs:
 
     runs-on: self-hosted
 
-    outputs:
-      app-status: ${{ steps.wait-for-app.outputs.app-status }}
-
     steps:
       - name: Stop previous instance (if exists)
         if: always()  # Ensure this step always runs, even if previous steps fail
@@ -69,6 +66,7 @@ jobs:
               rm pid.txt
             fi
             # Exit the workflow with an error code if needed
+            echo "Application timed out, exiting the workflow."
             exit 1
           else
             echo "Application started successfully."
