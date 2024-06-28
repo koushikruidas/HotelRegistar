@@ -33,7 +33,6 @@ jobs:
           echo "DB_USERNAME=${{ secrets.DB_USERNAME }}" | sudo tee -a /etc/hotel-admin-app.env
           echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" | sudo tee -a /etc/hotel-admin-app.env
           echo "SSL_PASSWORD=${{ secrets.SSL_PASSWORD }}" | sudo tee -a /etc/hotel-admin-app.env
-        # Ensure the environment file has the correct permissions
           sudo chmod 600 /etc/hotel-admin-app.env
 
       - name: Build with Maven
