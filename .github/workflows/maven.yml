@@ -16,19 +16,19 @@ on:
 
 jobs:
   build-and-deploy:
-
     runs-on: self-hosted
 
     steps:
       - uses: actions/checkout@v4
+
       - name: Stop previous instance (if exists)
-        if: always()  # Ensure this step always runs, even if previous steps fail
+        if: always()
         run: |
-          if [ -f "pid.txt" ]; then
-            PID=$(cat pid.txt)
+          if [ -f "/home/ec2-user/pid.txt" ]; then
+            PID=$(cat /home/ec2-user/pid.txt)
             echo "Stopping previous instance of the application with PID $PID"
-            kill $PID || true  # Use `|| true` to ignore errors if the process is already stopped
-            rm pid.txt
+            kill $PID || true
+            rm /home/ec2-user/pid.txt
           else
             echo "No previous instance found. Proceeding with deployment."
           fi
@@ -46,7 +46,7 @@ jobs:
             -DJWT_SECRET=${{ secrets.JWT_SECRET }} \
             -DSSL_PASSWORD=${{ secrets.SSL_PASSWORD }} \
             /home/ec2-user/actions-runner/_work/HotelRegistar/HotelRegistar/userService/target/userService-0.0.1-SNAPSHOT.jar > /home/ec2-user/application.log 2>&1 &
-          echo "PID=$!" >> /home/ec2-user/pid.txt  # Capture the PID of the background process
+          echo $! > /home/ec2-user/pid.txt  # Capture the PID of the background process
 
       - name: Wait for the application to start
         id: wait-for-app
@@ -60,13 +60,11 @@ jobs:
           done
           if [ $retries -eq $max_retries ]; then
             echo "Application startup timed out. Performing cleanup."
-            # Perform cleanup actions here, such as terminating the process or handling logs
-            if [ -f "pid.txt" ]; then
-              PID=$(cat pid.txt)
+            if [ -f "/home/ec2-user/pid.txt" ]; then
+              PID=$(cat /home/ec2-user/pid.txt)
               kill $PID || true
-              rm pid.txt
+              rm /home/ec2-user/pid.txt
             fi
-            # Exit the workflow with an error code if needed
             echo "Application timed out, exiting the workflow."
             exit 1
           else
