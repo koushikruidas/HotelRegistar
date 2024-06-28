@@ -47,7 +47,7 @@ jobs:
       run: |
         retries=0
         max_retries=20  # Adjust the number of retries based on your application's startup time
-        until curl --output /dev/null --silent --head --fail http://localhost:9000/swagger-ui/index.html || [ $retries -eq $max_retries ]; do
+        until curl --output /dev/null --silent --head --fail http://localhost:9000/actuator/health || [ $retries -eq $max_retries ]; do
           echo "Waiting for application to start..."
           retries=$((retries + 1))
           sleep 10s
@@ -61,5 +61,5 @@ jobs:
 
     # Optional: Check application status
     - name: Check application status
-      run: curl -v http://localhost:9000/swagger-ui/index.html  # Adjust the URL and port as needed
+      run: curl -v http://localhost:9000/actuator/health  # Adjust the URL and port as needed
 
