@@ -41,7 +41,25 @@ jobs:
           -DJWT_SECRET=${{ secrets.JWT_SECRET }} \
           -DSSL_PASSWORD=${{ secrets.SSL_PASSWORD }} \
           /home/ec2-user/actions-runner/_work/HotelRegistar/HotelRegistar/userService/target/userService-0.0.1-SNAPSHOT.jar > /home/ec2-user/application.log 2>&1 &
+        echo "PID=$!" >> /home/ec2-user/pid.txt  # Capture the PID of the background process
 
     - name: Wait for the application to start
-      run: sleep 30s  # Adjust the time as needed to ensure the application has started
+      run: |
+        retries=0
+        max_retries=20  # Adjust the number of retries based on your application's startup time
+        until curl --output /dev/null --silent --head --fail http://localhost:9000/swagger-ui/index.html || [ $retries -eq $max_retries ]; do
+          echo "Waiting for application to start..."
+          retries=$((retries + 1))
+          sleep 10s
+        done
+        if [ $retries -eq $max_retries ]; then
+          echo "Application startup timed out."
+          exit 1
+        else
+          echo "Application started successfully."
+        fi
+
+    # Optional: Check application status
+    - name: Check application status
+      run: curl -v http://localhost:9000/swagger-ui/index.html  # Adjust the URL and port as needed
 
