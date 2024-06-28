@@ -25,9 +25,6 @@ jobs:
         if: always()
         run: sudo systemctl stop hotel-admin-app || true
 
-      - name: Build with Maven
-        run: mvn --file /home/ec2-user/actions-runner/_work/HotelRegistar/HotelRegistar/userService/pom.xml clean install -DskipTests
-
       - name: Create environment file for systemd service
         run: |
           echo "AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }}" | sudo tee /etc/hotel-admin-app.env
@@ -38,6 +35,9 @@ jobs:
           echo "SSL_PASSWORD=${{ secrets.SSL_PASSWORD }}" | sudo tee -a /etc/hotel-admin-app.env
         # Ensure the environment file has the correct permissions
           sudo chmod 600 /etc/hotel-admin-app.env
+
+      - name: Build with Maven
+        run: mvn --file /home/ec2-user/actions-runner/_work/HotelRegistar/HotelRegistar/userService/pom.xml clean install -DskipTests
 
       - name: Start the new version
         run: sudo systemctl start hotel-admin-app
