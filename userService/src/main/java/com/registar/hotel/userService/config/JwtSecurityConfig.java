@@ -63,6 +63,7 @@ public class JwtSecurityConfig {
                 .authorizeHttpRequests(req -> {
                     req
                             .requestMatchers("/auth/**",
+                                    "/actuator/**",
                                     "/error/**",
                                     "/favicon.ico",
                                     "/*.png",
