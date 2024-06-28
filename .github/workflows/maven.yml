@@ -68,22 +68,15 @@ jobs:
             sleep 10s
           done
           if [ $retries -eq $max_retries ]; then
-            echo "::set-output name=app-status::Application startup timed out."
+            echo "Application startup timed out. Performing cleanup."
+            # Perform cleanup actions here, such as terminating the process or handling logs
+            if [ -f "pid.txt" ]; then
+              PID=$(cat pid.txt)
+              kill $PID || true
+              rm pid.txt
+            fi
+            # Exit the workflow with an error code if needed
             exit 1
           else
-            echo "::set-output name=app-status::Application started successfully."
+            echo "Application started successfully."
           fi
-
-      # Optional: Check application status
-      - name: Check application status
-        run: curl -k -v http://localhost:9000/actuator/health  # Adjust the URL and port as needed
-
-  checkout-job:
-    runs-on: self-hosted
-    needs: [ build-and-deploy ]
-    if: ${{ needs.build-and-deploy.outputs.app-status == 'Application startup timed out.' }}
-
-    steps:
-      # Explicitly run this checkout job only if the application is down or timed out
-      - name: Do something without checkout
-        uses: actions/checkout@v4
