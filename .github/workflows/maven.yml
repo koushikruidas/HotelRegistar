@@ -32,4 +32,4 @@ jobs:
 
     # Optional: Uploads the full dependency graph to GitHub to improve the quality of Dependabot alerts this repository can receive
     - name: Run the application
-      run: java -jar /home/ubuntu/actions-runner/_work/HotelRegistar/HotelRegistar/userService/target/userService-0.0.1-SNAPSHOT.jar
+      run: nohup java -jar -DAWS_ACCESS_KEY=${{AWS_ACCESS_KEY}} -DAWS_SECRET_KEY=${{AWS_SECRET_KEY}} -DDB_PASSWORD=${{DB_PASSWORD}} -DDB_USERNAME=${{DB_USERNAME}} -DJWT_SECRET=${{JWT_SECRET}} -DSSL_PASSWORD=${{SSL_PASSWOR}} /home/ubuntu/actions-runner/_work/HotelRegistar/HotelRegistar/userService/target/userService-0.0.1-SNAPSHOT.jar > output.log 2>&1 &
