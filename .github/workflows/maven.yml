@@ -28,8 +28,8 @@ jobs:
         distribution: 'temurin'
         cache: maven
     - name: Build with Maven
-      run: mvn --file /home/ubuntu/actions-runner/_work/HotelRegistar/HotelRegistar/userService/pom.xml clean install -DskipTests
+      run: mvn --file /home/ec2-user/actions-runner/_work/HotelRegistar/HotelRegistar/userService/pom.xml clean install -DskipTests
 
     # Optional: Uploads the full dependency graph to GitHub to improve the quality of Dependabot alerts this repository can receive
     - name: Run the application
-      run: nohup java -jar -DAWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }} -DAWS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }} -DDB_PASSWORD=${{ secrets.DB_PASSWORD }} -DDB_USERNAME=${{ secrets.DB_USERNAME }} -DJWT_SECRET=${{ secrets.JWT_SECRET }} -DSSL_PASSWORD=${{ secrets.SSL_PASSWORD }} /home/ubuntu/actions-runner/_work/HotelRegistar/HotelRegistar/userService/target/userService-0.0.1-SNAPSHOT.jar > output.log 2>&1 &
+      run: nohup java -jar -DAWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }} -DAWS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }} -DDB_PASSWORD=${{ secrets.DB_PASSWORD }} -DDB_USERNAME=${{ secrets.DB_USERNAME }} -DJWT_SECRET=${{ secrets.JWT_SECRET }} -DSSL_PASSWORD=${{ secrets.SSL_PASSWORD }} /home/ec2-user/actions-runner/_work/HotelRegistar/HotelRegistar/userService/target/userService-0.0.1-SNAPSHOT.jar > output.log 2>&1 &
