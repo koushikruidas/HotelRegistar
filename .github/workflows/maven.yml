@@ -70,3 +70,18 @@ jobs:
           else
             echo "Application started successfully."
           fi
+      - name: Prevent orphan processes
+        if: always()
+        run: |
+          echo "Ensuring no orphan processes are left behind."
+          if [ -f "/home/ec2-user/pid.txt" ]; then
+            PID=$(cat /home/ec2-user/pid.txt)
+            if ps -p $PID > /dev/null; then
+              echo "Process $PID is still running, keeping it alive."
+            else
+              echo "Process $PID is not running, cleaning up."
+              rm /home/ec2-user/pid.txt
+            fi
+          else
+            echo "No pid.txt file found, nothing to clean up."
+          fi
